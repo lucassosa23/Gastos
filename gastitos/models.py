@@ -13,13 +13,14 @@ class PerfilUsuario(models.Model):
     fecha_nacimiento = models.DateField(blank=True, null=True)
     profesion = models.CharField(max_length=100, blank=True)
     salario_mensual = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    saldo_base = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Saldo base personalizado establecido por el usuario")
     
     def __str__(self):
         return f"Perfil de {self.user.username}"
     
     @property
     def saldo_disponible(self):
-        # Calcular gastos solo del mes actual
+        # Calcular gastos del mes actual
         now = datetime.now()
         mes_actual = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
@@ -27,7 +28,11 @@ class PerfilUsuario(models.Model):
             fecha__gte=mes_actual
         ).aggregate(total=Sum('monto'))['total'] or Decimal('0')
         
-        return self.salario_mensual - total_gastos_mes
+        # Si hay un saldo_base establecido, usarlo como base; sino usar salario_mensual
+        base = self.saldo_base if self.saldo_base is not None else self.salario_mensual
+        
+        # Devolver el saldo disponible (base - gastos del mes)
+        return base - total_gastos_mes
     
     def get_gastos_mes_actual(self):
         """Obtiene los gastos del mes actual"""
@@ -94,6 +99,49 @@ class GastoFijo(models.Model):
             descripcion=self.descripcion,
             monto=self.monto
         )
+            
+class GastoPlanificado(models.Model):
+    MESES_CHOICES = [
+        (1, 'Enero'),
+        (2, 'Febrero'),
+        (3, 'Marzo'),
+        (4, 'Abril'),
+        (5, 'Mayo'),
+        (6, 'Junio'),
+        (7, 'Julio'),
+        (8, 'Agosto'),
+        (9, 'Septiembre'),
+        (10, 'Octubre'),
+        (11, 'Noviembre'),
+        (12, 'Diciembre'),
+    ]
+    
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    descripcion = models.CharField(max_length=200)
+    monto = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+    mes = models.IntegerField(choices=MESES_CHOICES)
+    anio = models.IntegerField()
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    completado = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['anio', 'mes', 'descripcion']
+        verbose_name = 'Gasto Planificado'
+        verbose_name_plural = 'Gastos Planificados'
+    
+    def __str__(self):
+        return f"{self.descripcion} - ${self.monto} ({self.get_mes_display()} {self.anio})"
+    
+    def aplicar_gasto(self):
+        """Crea un gasto regular a partir de este gasto planificado y lo marca como completado"""
+        gasto = Gasto.objects.create(
+            usuario=self.usuario,
+            descripcion=self.descripcion,
+            monto=self.monto
+        )
+        self.completado = True
+        self.save()
+        return gasto
 
 class Vencimiento(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -13,21 +13,35 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='logrousuario',
-            name='logro',
-        ),
-        migrations.AlterUniqueTogether(
-            name='logrousuario',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='logrousuario',
-            name='usuario',
-        ),
-        migrations.RemoveField(
-            model_name='racha',
-            name='usuario',
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveField(
+                    model_name='logrousuario',
+                    name='logro',
+                ),
+                migrations.AlterUniqueTogether(
+                    name='logrousuario',
+                    unique_together=None,
+                ),
+                migrations.RemoveField(
+                    model_name='logrousuario',
+                    name='usuario',
+                ),
+                migrations.RemoveField(
+                    model_name='racha',
+                    name='usuario',
+                ),
+                migrations.DeleteModel(
+                    name='Logro',
+                ),
+                migrations.DeleteModel(
+                    name='LogroUsuario',
+                ),
+                migrations.DeleteModel(
+                    name='Racha',
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.CreateModel(
             name='EstadisticaMensual',
@@ -43,14 +57,5 @@ class Migration(migrations.Migration):
                 'ordering': ['-año', '-mes'],
                 'unique_together': {('usuario', 'año', 'mes')},
             },
-        ),
-        migrations.DeleteModel(
-            name='Logro',
-        ),
-        migrations.DeleteModel(
-            name='LogroUsuario',
-        ),
-        migrations.DeleteModel(
-            name='Racha',
         ),
     ]

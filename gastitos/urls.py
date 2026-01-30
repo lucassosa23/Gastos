@@ -24,4 +24,11 @@ urlpatterns = [
     path('meta/<int:meta_id>/editar/', views.editar_meta, name='editar_meta'),
     path('meta/<int:meta_id>/eliminar/', views.eliminar_meta, name='eliminar_meta'),
     path('meta/<int:meta_id>/pausar-reactivar/', views.pausar_reactivar_meta, name='pausar_reactivar_meta'),
+    
+    # URLs para planificación de gastos
+    path('planificacion/', views.planificacion_gastos, name='planificacion_gastos'),
+    path('planificacion/agregar/', views.agregar_gasto_planificado, name='agregar_gasto_planificado'),
+    path('planificacion/editar/<int:gasto_id>/', views.editar_gasto_planificado, name='editar_gasto_planificado'),
+    path('planificacion/eliminar/<int:gasto_id>/', views.eliminar_gasto_planificado, name='eliminar_gasto_planificado'),
+    path('planificacion/aplicar/<int:gasto_id>/', views.aplicar_gasto_planificado, name='aplicar_gasto_planificado'),
 ]

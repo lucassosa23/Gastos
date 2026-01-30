@@ -15,10 +15,15 @@
                                 <div class="flex-grow-1">
                                     <h6 class="card-title mb-2">Saldo Disponible</h6>
                                     <h3 class="mb-0">
-                                        <i class="fas fa-wallet me-2"></i>${{ perfil.saldo_disponible|floatformat:0 }}
+                                        <i class="fas fa-wallet me-2"></i>
+                                        <span id="saldo-amount">${{ perfil.saldo_disponible|floatformat:0 }}</span>
+                                        <span id="saldo-hidden" style="display: none;">****</span>
                                     </h3>
                                 </div>
-                                <div class="ms-2">
+                                <div class="ms-2 d-flex gap-1">
+                                    <button id="toggle-saldo" class="btn btn-light btn-sm" title="Ocultar/Mostrar Saldo">
+                                        <i id="eye-icon" class="fas fa-eye"></i>
+                                    </button>
                                     <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSaldoModal" title="Editar Saldo">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -439,6 +444,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const descripcionInput = document.querySelector('#id_descripcion');
     if (descripcionInput && {{ salario_configurado|yesno:"true,false" }}) {
         setTimeout(() => descripcionInput.focus(), 500);
+    }
+    
+    // Funcionalidad para ocultar/mostrar saldo
+    const toggleSaldoBtn = document.getElementById('toggle-saldo');
+    const saldoAmount = document.getElementById('saldo-amount');
+    const saldoHidden = document.getElementById('saldo-hidden');
+    const eyeIcon = document.getElementById('eye-icon');
+    
+    if (toggleSaldoBtn && saldoAmount && saldoHidden && eyeIcon) {
+        // Recuperar estado del localStorage
+        const isHidden = localStorage.getItem('saldoHidden') === 'true';
+        
+        // Aplicar estado inicial
+        if (isHidden) {
+            saldoAmount.style.display = 'none';
+            saldoHidden.style.display = 'inline';
+            eyeIcon.className = 'fas fa-eye-slash';
+        }
+        
+        toggleSaldoBtn.addEventListener('click', function() {
+            const currentlyHidden = saldoAmount.style.display === 'none';
+            
+            if (currentlyHidden) {
+                // Mostrar saldo
+                saldoAmount.style.display = 'inline';
+                saldoHidden.style.display = 'none';
+                eyeIcon.className = 'fas fa-eye';
+                localStorage.setItem('saldoHidden', 'false');
+            } else {
+                // Ocultar saldo
+                saldoAmount.style.display = 'none';
+                saldoHidden.style.display = 'inline';
+                eyeIcon.className = 'fas fa-eye-slash';
+                localStorage.setItem('saldoHidden', 'true');
+            }
+        });
     }
 });
 </script>

@@ -10,8 +10,21 @@ from django.db.models import Sum, Q
 from django.db import models
 from django.db.models.functions import TruncMonth
 from django.core.paginator import Paginator
-from .models import Gasto, PerfilUsuario, GastoFijo, Vencimiento, MetaAhorro
+from .models import Gasto, PerfilUsuario, GastoFijo, Vencimiento, MetaAhorro, GastoPlanificado
 from .forms import GastoForm, PerfilUsuarioForm, SalarioForm, GastoFijoForm, VencimientoForm
+from django import forms
+from datetime import datetime
+
+class GastoPlanificadoForm(forms.ModelForm):
+    class Meta:
+        model = GastoPlanificado
+        fields = ['descripcion', 'monto', 'mes', 'anio']
+        widgets = {
+            'descripcion': forms.TextInput(attrs={'class': 'form-control'}),
+            'monto': forms.NumberInput(attrs={'class': 'form-control', 'min': '0.01', 'step': '0.01'}),
+            'mes': forms.Select(attrs={'class': 'form-control'}),
+            'anio': forms.NumberInput(attrs={'class': 'form-control', 'min': datetime.now().year})
+        }
 from .forms_ahorro import MetaAhorroForm, AgregarAhorroForm, EditarMetaForm
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -43,6 +56,162 @@ from .utils_ahorro import (
     verificar_metas_vencidas,
     generar_consejos_ahorro
 )
+
+@login_required
+def planificacion_gastos(request):
+    """Vista principal para la planificación de gastos del mes siguiente"""
+    # Obtener mes y año siguiente
+    fecha_actual = datetime.now()
+    if fecha_actual.month == 12:
+        mes_siguiente = 1
+        año_siguiente = fecha_actual.year + 1
+    else:
+        mes_siguiente = fecha_actual.month + 1
+        año_siguiente = fecha_actual.year
+    
+    # Obtener gastos planificados del usuario para el mes siguiente
+    gastos_planificados = GastoPlanificado.objects.filter(
+        usuario=request.user,
+        mes=mes_siguiente,
+        anio=año_siguiente
+    ).order_by('descripcion')
+    
+    # Calcular total planificado
+    total_planificado = gastos_planificados.aggregate(
+        total=Sum('monto')
+    )['total'] or Decimal('0')
+    
+    # Procesar el saldo personalizado y monto sobrante si se envía en el formulario
+    saldo_personalizado = Decimal('0')
+    monto_sobrante = Decimal('0')
+
+    if request.method == 'POST':
+        # Revertimos para tomar directamente los valores del formulario
+        try:
+            saldo_personalizado = Decimal(request.POST.get('saldo_personalizado', '0') or '0')
+        except (ValueError, InvalidOperation):
+            saldo_personalizado = Decimal('0')
+
+        try:
+            monto_sobrante = Decimal(request.POST.get('monto_sobrante', '0') or '0')
+        except (ValueError, InvalidOperation):
+            monto_sobrante = Decimal('0')
+        # Permitimos valores negativos si la suma y planificación lo requieren
+
+    else:
+        if 'saldo_personalizado' in request.session:
+            try:
+                saldo_personalizado = Decimal(str(request.session['saldo_personalizado']))
+            except (ValueError, InvalidOperation):
+                saldo_personalizado = Decimal('0')
+        if 'monto_sobrante' in request.session:
+            try:
+                monto_sobrante = Decimal(str(request.session['monto_sobrante']))
+            except (ValueError, InvalidOperation):
+                monto_sobrante = Decimal('0')
+
+    # Guardar valores en la sesión
+    request.session['saldo_personalizado'] = str(saldo_personalizado)
+    request.session['monto_sobrante'] = str(monto_sobrante)
+
+    # Calcular saldo total disponible (saldo + sobrante)
+    saldo_total = saldo_personalizado + monto_sobrante
+
+    # Calcular saldo estimado después de gastos planificados
+    saldo_estimado = saldo_total - total_planificado
+    
+    # Obtener gastos fijos para sugerir planificación
+    gastos_fijos = GastoFijo.objects.filter(
+        usuario=request.user,
+        activo=True
+    )
+    
+    context = {
+        'gastos_planificados': gastos_planificados,
+        'total_planificado': total_planificado,
+        'saldo_personalizado': saldo_personalizado,
+        'monto_sobrante': monto_sobrante,
+        'saldo_estimado': saldo_estimado,
+        'gastos_fijos': gastos_fijos,
+        'mes_siguiente': mes_siguiente,
+        'año_siguiente': año_siguiente,
+        'nombre_mes': GastoPlanificado.MESES_CHOICES[mes_siguiente-1][1]
+    }
+    
+    return render(request, 'gastitos/planificacion_gastos.html', context)
+
+@login_required
+def agregar_gasto_planificado(request):
+    """Vista para agregar un nuevo gasto planificado"""
+    if request.method == 'POST':
+        form = GastoPlanificadoForm(request.POST)
+        if form.is_valid():
+            gasto_planificado = form.save(commit=False)
+            gasto_planificado.usuario = request.user
+            gasto_planificado.save()
+            
+            messages.success(request, 'Gasto planificado agregado correctamente.')
+            return redirect('planificacion_gastos')
+    else:
+        # Predeterminar mes y año siguiente
+        fecha_actual = datetime.now()
+        if fecha_actual.month == 12:
+            mes_siguiente = 1
+            año_siguiente = fecha_actual.year + 1
+        else:
+            mes_siguiente = fecha_actual.month + 1
+            año_siguiente = fecha_actual.year
+            
+        form = GastoPlanificadoForm(initial={'mes': mes_siguiente, 'anio': año_siguiente})
+    
+    return render(request, 'gastitos/gasto_planificado_form.html', {'form': form})
+
+@login_required
+def editar_gasto_planificado(request, gasto_id):
+    """Vista para editar un gasto planificado existente"""
+    gasto_planificado = get_object_or_404(GastoPlanificado, id=gasto_id, usuario=request.user)
+    
+    if request.method == 'POST':
+        form = GastoPlanificadoForm(request.POST, instance=gasto_planificado)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Gasto planificado actualizado correctamente.')
+            return redirect('planificacion_gastos')
+    else:
+        form = GastoPlanificadoForm(instance=gasto_planificado)
+    
+    return render(request, 'gastitos/gasto_planificado_form.html', {
+        'form': form,
+        'gasto_planificado': gasto_planificado
+    })
+
+@login_required
+def eliminar_gasto_planificado(request, gasto_id):
+    """Vista para eliminar un gasto planificado"""
+    gasto_planificado = get_object_or_404(GastoPlanificado, id=gasto_id, usuario=request.user)
+    
+    if request.method == 'POST':
+        gasto_planificado.delete()
+        messages.success(request, 'Gasto planificado eliminado correctamente.')
+        return redirect('planificacion_gastos')
+    
+    return render(request, 'gastitos/confirmar_eliminar_gasto_planificado.html', {
+        'gasto_planificado': gasto_planificado
+    })
+
+@login_required
+def aplicar_gasto_planificado(request, gasto_id):
+    """Vista para aplicar un gasto planificado como gasto real"""
+    gasto_planificado = get_object_or_404(GastoPlanificado, id=gasto_id, usuario=request.user)
+    
+    if request.method == 'POST':
+        gasto = gasto_planificado.aplicar_gasto()
+        messages.success(request, f'Gasto "{gasto.descripcion}" aplicado correctamente.')
+        return redirect('planificacion_gastos')
+    
+    return render(request, 'gastitos/confirmar_aplicar_gasto_planificado.html', {
+        'gasto_planificado': gasto_planificado
+    })
 
 @login_required
 def agregar_gasto_calendario(request):
@@ -457,10 +626,9 @@ def index(request):
                         fecha__gte=mes_actual
                     ).aggregate(total=Sum('monto'))['total'] or Decimal('0')
                     
-                    # Calcular nuevo salario mensual: saldo_deseado + gastos_actuales
-                    nuevo_salario = nuevo_saldo + total_gastos_mes
-                    
-                    perfil.salario_mensual = nuevo_salario
+                    # Establecer el saldo_base para que el saldo_disponible sea el deseado
+                    # saldo_disponible = saldo_base - gastos_mes, entonces saldo_base = saldo_deseado + gastos_mes
+                    perfil.saldo_base = nuevo_saldo + total_gastos_mes
                     perfil.save()
                     
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -757,7 +925,7 @@ def dashboard(request):
     if fines_semana_restantes == 0:
         fines_semana_restantes = 1
         
-    gasto_por_finde = saldo_restante / fines_semana_restantes if saldo_restante > 0 else 0
+    gasto_por_finde = saldo_restante / Decimal(str(fines_semana_restantes)) if saldo_restante > 0 else 0
     
     # Verificar si se acerca al límite (200,000 pesos restantes)
     advertencia_limite = saldo_restante <= 200000 and saldo_restante > 0

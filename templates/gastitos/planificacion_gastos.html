@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Planificación de Gastos - {{ nombre_mes }} {{ año_siguiente }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">Planificación de Gastos - {{ nombre_mes }} {{ año_siguiente }}</h2>
+            <p class="lead">Planifica tus gastos para el próximo mes y mantén un mejor control de tus finanzas.</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Ingresa tu Saldo Disponible</h5>
+                </div>
+                <div class="card-body">
+                    <form id="saldoForm" method="post" class="d-flex align-items-center">
+                        {% csrf_token %}
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">$</span>
+                            <input type="number" id="saldo_personalizado" name="saldo_personalizado" class="form-control" value="{{ saldo_personalizado|default:0 }}" step="0.01" min="0">
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">+ Sobrante $</span>
+                            <input type="number" id="monto_sobrante" name="monto_sobrante" class="form-control" value="{{ monto_sobrante|default:0 }}" step="0.01" min="0">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Actualizar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Total Gastos Planificados</h5>
+                </div>
+                <div class="card-body">
+                    <h3>${{ total_planificado|floatformat:2 }}</h3>
+                    <small class="text-muted">Total de gastos que planeas realizar</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card {% if saldo_estimado < 0 %}border-danger{% else %}border-success{% endif %}">
+                <div class="card-header {% if saldo_estimado < 0 %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h5 class="mb-0">Saldo Restante</h5>
+                </div>
+                <div class="card-body">
+                    <h3>${{ saldo_estimado|floatformat:2 }}</h3>
+                    <small class="text-muted">Lo que te quedará después de los gastos</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Gastos Planificados</h5>
+                    <a href="{% url 'agregar_gasto_planificado' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Agregar Gasto
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if gastos_planificados %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Descripción</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for gasto in gastos_planificados %}
+                                    <tr>
+                                        <td>{{ gasto.descripcion }}</td>
+                                        <td>${{ gasto.monto|floatformat:2 }}</td>
+                                        <td>
+                                            {% if gasto.completado %}
+                                                <span class="badge bg-success">Completado</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                {% if not gasto.completado %}
+                                                <a href="{% url 'aplicar_gasto_planificado' gasto.id %}" class="btn btn-sm btn-success" title="Aplicar como gasto real">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="{% url 'editar_gasto_planificado' gasto.id %}" class="btn btn-sm btn-primary" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% endif %}
+                                                <a href="{% url 'eliminar_gasto_planificado' gasto.id %}" class="btn btn-sm btn-danger" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No tienes gastos planificados para {{ nombre_mes }} {{ año_siguiente }}.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if gastos_fijos %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sugerencias basadas en tus Gastos Fijos</h5>
+                </div>
+                <div class="card-body">
+                    <p>Estos son tus gastos fijos actuales que podrías incluir en tu planificación:</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th>Monto</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for gasto_fijo in gastos_fijos %}
+                                <tr>
+                                    <td>{{ gasto_fijo.descripcion }}</td>
+                                    <td>${{ gasto_fijo.monto|floatformat:2 }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'agregar_gasto_planificado' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="descripcion" value="{{ gasto_fijo.descripcion }}">
+                                            <input type="hidden" name="monto" value="{{ gasto_fijo.monto }}">
+                                            <input type="hidden" name="mes" value="{{ mes_siguiente }}">
+                                            <input type="hidden" name="anio" value="{{ año_siguiente }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-plus-circle"></i> Agregar a planificación
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}

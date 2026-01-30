@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Aplicación de Gasto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Confirmar Aplicación de Gasto</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">¿Estás seguro que deseas aplicar este gasto planificado como un gasto real?</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>{{ gasto_planificado.descripcion }}</strong> - ${{ gasto_planificado.monto|floatformat:2 }}
+                        <br>
+                        <small>{{ gasto_planificado.get_mes_display }} {{ gasto_planificado.año }}</small>
+                    </div>
+                    
+                    <p>Al confirmar, se creará un gasto real con estos datos y se marcará este gasto planificado como completado.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'planificacion_gastos' %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success">Aplicar Gasto</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
