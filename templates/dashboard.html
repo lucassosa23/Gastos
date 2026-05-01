@@ -44,93 +44,106 @@
 
 
     
-    <!-- Resumen del mes actual -->
-    <div class="row mb-4">
+    <!-- Resumen del mes actual: 3 stat cards minimalistas -->
+    <style>
+        .stat-card { padding: 1.5rem; }
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--color-text-soft);
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .stat-amount {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin: 0;
+        }
+        .stat-card.is-positive .stat-amount { color: var(--color-success); }
+        .stat-card.is-negative .stat-amount { color: var(--color-danger); }
+        .stat-card.is-accent {
+            background: var(--color-primary-soft);
+            border-color: var(--color-primary-soft-strong);
+        }
+        .stat-card.is-accent .stat-label { color: var(--color-primary-hover); opacity: 0.75; }
+        .stat-card.is-accent .stat-amount { color: var(--color-primary-hover); }
+    </style>
+    <div class="row mb-4 g-3">
         <div class="col-md-4">
-            <div class="card text-white {% if saldo_restante >= 0 %}bg-success{% else %}bg-danger{% endif %}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Saldo Restante</h6>
-                            <h4>${{ saldo_restante|floatformat:0 }}</h4>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-chart-line fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="card stat-card {% if saldo_restante >= 0 %}is-positive{% else %}is-negative{% endif %}">
+                <div class="stat-label">Saldo restante</div>
+                <h4 class="stat-amount">${{ saldo_restante|floatformat:0 }}</h4>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Disponible por Fin de Semana (Sáb-Dom)</h6>
-                            <h4>${{ gasto_por_finde|floatformat:0 }}</h4>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-calendar-week fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="card stat-card">
+                <div class="stat-label">Disponible por fin de semana</div>
+                <h4 class="stat-amount">${{ gasto_por_finde|floatformat:0 }}</h4>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Monto Ahorrado</h6>
-                            <h4>${{ estadisticas_ahorro.monto_total_ahorrado|floatformat:0 }}</h4>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-piggy-bank fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="card stat-card is-accent">
+                <div class="stat-label">Monto ahorrado</div>
+                <h4 class="stat-amount">${{ estadisticas_ahorro.monto_total_ahorrado|floatformat:0 }}</h4>
             </div>
         </div>
     </div>
 
-    <!-- Estadísticas Generales -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Estadísticas Generales</h5>
+    <!-- Estadísticas Generales: cuatro mini-stats -->
+    <style>
+        .mini-stat {
+            padding: 1.25rem;
+            border-radius: var(--radius-lg);
+            background: var(--color-border-soft);
+        }
+        .mini-stat .mini-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--color-text-soft);
+            margin-bottom: 0.5rem;
+        }
+        .mini-stat .mini-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+            color: var(--color-text);
+        }
+    </style>
+    <div class="card mb-4">
+        <div class="card-header">Estadísticas generales</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="mini-stat">
+                        <div class="mini-label">Promedio mensual</div>
+                        <h4 class="mini-value" style="color: var(--color-primary);">${{ promedio_mensual|floatformat:0 }}</h4>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center p-3 bg-light rounded">
-                                <h6 class="text-muted">Promedio Mensual</h6>
-                                <h4 class="text-primary">${{ promedio_mensual|floatformat:0 }}</h4>
-                            </div>
+                <div class="col-md-3">
+                    <div class="mini-stat">
+                        <div class="mini-label">Mes con más gastos</div>
+                        <h4 class="mini-value">{{ mes_mayor_gasto }}</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mini-stat">
+                        <div class="mini-label">Mes con menos gastos</div>
+                        <h4 class="mini-value">{{ mes_menor_gasto }}</h4>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mini-stat">
+                        <div class="mini-label">Uso del salario</div>
+                        <h4 class="mini-value {% if porcentaje_usado > 80 %}text-danger{% elif porcentaje_usado > 60 %}text-warning{% endif %}" style="margin-bottom: 0.5rem;">{{ porcentaje_usado|floatformat:0 }}%</h4>
+                        <div class="progress" style="height: 6px; background: rgba(15,23,42,0.06);">
+                            <div class="progress-bar {% if porcentaje_usado > 80 %}bg-danger{% elif porcentaje_usado > 60 %}bg-warning{% else %}bg-primary{% endif %}"
+                                 style="width: {{ porcentaje_usado }}%"></div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="text-center p-3 bg-light rounded">
-                                <h6 class="text-muted">Mes con Más Gastos</h6>
-                                <h4 class="text-danger">{{ mes_mayor_gasto }}</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center p-3 bg-light rounded">
-                                <h6 class="text-muted">Mes con Menos Gastos</h6>
-                                <h4 class="text-success">{{ mes_menor_gasto }}</h4>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                             <div class="text-center p-3 bg-light rounded">
-                                 <h6 class="text-muted">Uso del Salario</h6>
-                                 <h4 class="{% if porcentaje_usado > 80 %}text-danger{% elif porcentaje_usado > 60 %}text-warning{% else %}text-success{% endif %} mb-2">{{ porcentaje_usado|floatformat:0 }}%</h4>
-                                 <div class="progress mb-2" style="height: 12px;">
-                                     <div class="progress-bar {% if porcentaje_usado > 80 %}bg-danger{% elif porcentaje_usado > 60 %}bg-warning{% else %}bg-success{% endif %}" 
-                                          style="width: {{ porcentaje_usado }}%"></div>
-                                 </div>
-                                 <small class="text-muted">Del salario mensual</small>
-                             </div>
-                         </div>
                     </div>
                 </div>
             </div>
