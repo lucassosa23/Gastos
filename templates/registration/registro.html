@@ -1,162 +1,112 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-{% block title %}Registro - Control de Gastos{% endblock %}
+{% block title %}Crear cuenta · Gastitos{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-lg">
-            <div class="card-header text-center">
-                <h3 class="mb-0">
-                    <i class="fas fa-user-plus me-2"></i>Crear Cuenta
-                </h3>
-                <p class="mb-0 mt-2 opacity-75">Únete para controlar tus gastos</p>
+<style>
+    .registro-wrap {
+        padding: 4rem 0 5rem;
+    }
+    .registro-card {
+        background: var(--color-bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-md);
+        max-width: 480px;
+        margin: 0 auto;
+    }
+    .registro-card h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+    }
+    .registro-card .registro-sub {
+        font-size: 0.95rem;
+        color: var(--color-text-soft);
+        margin-bottom: 2rem;
+    }
+    .registro-card .form-label {
+        font-size: 0.825rem;
+    }
+    .registro-card .form-text {
+        font-size: 0.75rem;
+        color: var(--color-text-soft);
+        margin-top: 0.4rem;
+        display: block;
+    }
+    .registro-card .field-error {
+        font-size: 0.825rem;
+        color: var(--color-danger);
+        margin-top: 0.4rem;
+    }
+    .registro-footer {
+        text-align: center;
+        margin-top: 1.75rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border-soft);
+        font-size: 0.875rem;
+        color: var(--color-text-soft);
+    }
+    .registro-footer a {
+        color: var(--color-primary);
+        font-weight: 600;
+        text-decoration: none;
+    }
+</style>
+
+<div class="container registro-wrap">
+    <div class="registro-card">
+        <h1>Crear cuenta</h1>
+        <p class="registro-sub">
+            Empezá a llevar el control de tus gastos en menos de un minuto.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Nombre de usuario</label>
+                {{ form.username|add_class:"form-control" }}
+                {% if form.username.errors %}
+                    <div class="field-error">{{ form.username.errors.0 }}</div>
+                {% endif %}
+                <small class="form-text">Letras, números y @ . + - _</small>
             </div>
-            <div class="card-body p-4">
-                <form method="post" class="needs-validation" novalidate>
-                    {% csrf_token %}
-                    
-                    <div class="form-group mb-3">
-                        <label for="{{ form.username.id_for_label }}" class="form-label fw-medium">
-                            <i class="fas fa-user me-2 text-primary"></i>Nombre de usuario
-                        </label>
-                        <div class="input-group">
-                            {{ form.username|add_class:"form-control" }}
-                            <span class="input-group-text validation-icon">
-                                <i class="fas fa-user text-muted"></i>
-                            </span>
-                        </div>
-                        {% if form.username.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.username.errors.0 }}
-                            </div>
-                        {% endif %}
-                        <small class="form-text text-muted">
-                            Requerido. 150 caracteres o menos. Solo letras, números y @/./+/-/_ permitidos.
-                        </small>
-                    </div>
 
-                    <div class="form-group mb-3">
-                        <label for="{{ form.email.id_for_label }}" class="form-label fw-medium">
-                            <i class="fas fa-envelope me-2 text-primary"></i>Email
-                        </label>
-                        <div class="input-group">
-                            {{ form.email|add_class:"form-control" }}
-                            <span class="input-group-text validation-icon">
-                                <i class="fas fa-envelope text-muted"></i>
-                            </span>
-                        </div>
-                        {% if form.email.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.email.errors.0 }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label for="{{ form.password1.id_for_label }}" class="form-label fw-medium">
-                            <i class="fas fa-lock me-2 text-primary"></i>Contraseña
-                        </label>
-                        <div class="input-group">
-                            {{ form.password1|add_class:"form-control" }}
-                            <span class="input-group-text validation-icon">
-                                <i class="fas fa-lock text-muted"></i>
-                            </span>
-                        </div>
-                        {% if form.password1.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.password1.errors.0 }}
-                            </div>
-                        {% endif %}
-                        <small class="form-text text-muted">
-                            Tu contraseña debe tener al menos 8 caracteres y no puede ser muy común.
-                        </small>
-                    </div>
-
-                    <div class="form-group mb-4">
-                        <label for="{{ form.password2.id_for_label }}" class="form-label fw-medium">
-                            <i class="fas fa-lock me-2 text-primary"></i>Confirmar contraseña
-                        </label>
-                        <div class="input-group">
-                            {{ form.password2|add_class:"form-control" }}
-                            <span class="input-group-text validation-icon">
-                                <i class="fas fa-lock text-muted"></i>
-                            </span>
-                        </div>
-                        {% if form.password2.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.password2.errors.0 }}
-                            </div>
-                        {% endif %}
-                        <small class="form-text text-muted">
-                            Ingresa la misma contraseña para verificación.
-                        </small>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Crear Cuenta
-                        </button>
-                    </div>
-                </form>
+            <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                {{ form.email|add_class:"form-control" }}
+                {% if form.email.errors %}
+                    <div class="field-error">{{ form.email.errors.0 }}</div>
+                {% endif %}
             </div>
-            <div class="card-footer text-center bg-light">
-                <p class="mb-0">
-                    ¿Ya tienes una cuenta? 
-                    <a href="{% url 'login' %}" class="text-primary fw-medium text-decoration-none">
-                        Inicia sesión aquí
-                    </a>
-                </p>
+
+            <div class="mb-3">
+                <label for="{{ form.password1.id_for_label }}" class="form-label">Contraseña</label>
+                {{ form.password1|add_class:"form-control" }}
+                {% if form.password1.errors %}
+                    <div class="field-error">{{ form.password1.errors.0 }}</div>
+                {% endif %}
+                <small class="form-text">Mínimo 8 caracteres. Evitá contraseñas comunes.</small>
             </div>
+
+            <div class="mb-4">
+                <label for="{{ form.password2.id_for_label }}" class="form-label">Confirmar contraseña</label>
+                {{ form.password2|add_class:"form-control" }}
+                {% if form.password2.errors %}
+                    <div class="field-error">{{ form.password2.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-lg">Crear cuenta</button>
+        </form>
+
+        <div class="registro-footer">
+            ¿Ya tenés cuenta? <a href="{% url 'login' %}">Iniciar sesión</a>
         </div>
     </div>
 </div>
-
-<style>
-    .form-control {
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        width: 100%;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        box-sizing: border-box;
-    }
-    
-    .form-control:focus {
-        border-color: var(--primary-blue);
-        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
-        outline: none;
-    }
-    
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-label {
-        margin-bottom: 0.5rem;
-        display: block;
-        font-weight: 500;
-        color: #374151;
-    }
-    
-    .form-text {
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-        display: block;
-    }
-    
-    .text-danger small {
-        font-size: 0.875rem;
-        display: block;
-    }
-    
-    .card-footer {
-        border-top: 1px solid #e5e7eb;
-        background: #f8fafc !important;
-        border-radius: 0 0 15px 15px;
-        padding: 1rem 1.5rem;
-    }
-</style>
 {% endblock %}
