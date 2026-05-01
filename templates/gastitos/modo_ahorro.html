@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Modo Ahorro - Gastitos{% endblock %}
+{% block title %}Modo Ahorro · Gastitos{% endblock %}
 
 {% block extra_js %}
 <script>
@@ -9,20 +8,13 @@ function toggleAhorroForm(metaId) {
     const form = document.getElementById('form-ahorro-' + metaId);
     const button = document.getElementById('btn-ahorro-' + metaId);
     const input = document.getElementById('input-monto-' + metaId);
-    
-    if (form.style.display === 'none') {
-        // Mostrar formulario y ocultar botón
+    if (form.style.display === 'none' || !form.style.display) {
         form.style.display = 'block';
         button.style.display = 'none';
-        // Enfocar el input para facilitar la entrada
-        setTimeout(() => {
-            input.focus();
-        }, 100);
+        setTimeout(function() { input.focus(); }, 50);
     } else {
-        // Ocultar formulario y mostrar botón
         form.style.display = 'none';
         button.style.display = 'block';
-        // Limpiar el input
         input.value = '';
     }
 }
@@ -30,283 +22,241 @@ function toggleAhorroForm(metaId) {
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-piggy-bank text-success me-2"></i>
-                    Modo Ahorro
-                </h1>
-                <a href="{% url 'crear_meta_ahorro' %}" class="btn btn-success">
-                    <i class="fas fa-plus me-1"></i>Nueva Meta
-                </a>
-            </div>
+<div class="container" style="padding: 3rem 0;">
+
+    {# === Header === #}
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Metas y ahorro</span>
+            <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0.5rem 0 0;">Modo Ahorro</h1>
         </div>
+        <a href="{% url 'crear_meta_ahorro' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nueva meta
+        </a>
     </div>
 
-    <!-- Consejos personalizados -->
+    {# === Consejos === #}
     {% if consejos %}
-    <div class="row mb-4">
-        <div class="col-12">
-            {% for consejo in consejos %}
-            <div class="alert alert-{{ consejo.tipo }} alert-dismissible fade show" role="alert">
+        {% for consejo in consejos %}
+            <div class="alert alert-{{ consejo.tipo }} alert-dismissible fade show mb-3" role="alert">
                 <strong>{{ consejo.titulo }}</strong> {{ consejo.mensaje }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            {% endfor %}
-        </div>
-    </div>
+        {% endfor %}
     {% endif %}
 
-    <!-- Estadísticas generales -->
-    <div class="row mb-4">
+    {# === 4 stat cards === #}
+    <style>
+        .ms-stat { padding: 1.5rem; }
+        .ms-stat .ms-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.5rem; }
+        .ms-stat .ms-value { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+        .ms-stat.is-accent { background: var(--color-primary-soft); border-color: var(--color-primary-soft-strong); }
+        .ms-stat.is-accent .ms-label { color: var(--color-primary-hover); opacity: 0.75; }
+        .ms-stat.is-accent .ms-value { color: var(--color-primary-hover); }
+
+        .meta-card { padding: 1.5rem; height: 100%; display: flex; flex-direction: column; gap: 0.75rem; }
+        .meta-card-header { display: flex; justify-content: space-between; align-items: center; }
+        .meta-card-title { font-size: 1.05rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+        .meta-card-progress { height: 6px; background: var(--color-border); border-radius: 999px; overflow: hidden; }
+        .meta-card-progress-bar { height: 100%; background: var(--color-primary); border-radius: 999px; }
+        .meta-card-amounts { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--color-text-muted); padding-top: 0.5rem; border-top: 1px solid var(--color-border-soft); }
+        .meta-card-amount-value { font-weight: 700; color: var(--color-text); }
+        .badge-pill {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-pill.is-info { background: var(--color-primary-soft); color: var(--color-primary-hover); }
+        .badge-pill.is-warning { background: #fef3c7; color: #92400e; }
+        .badge-pill.is-danger { background: #fee2e2; color: #991b1b; }
+        .badge-pill.is-success { background: #dcfce7; color: #166534; }
+    </style>
+    <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body text-center">
-                    <i class="fas fa-target fa-2x mb-2"></i>
-                    <h4>{{ estadisticas.total_metas }}</h4>
-                    <p class="mb-0">Total de Metas</p>
-                </div>
+            <div class="card ms-stat">
+                <div class="ms-label">Total de metas</div>
+                <h4 class="ms-value">{{ estadisticas.total_metas }}</h4>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body text-center">
-                    <i class="fas fa-check-circle fa-2x mb-2"></i>
-                    <h4>{{ estadisticas.metas_activas }}</h4>
-                    <p class="mb-0">Metas Activas</p>
-                </div>
+            <div class="card ms-stat">
+                <div class="ms-label">Activas</div>
+                <h4 class="ms-value" style="color: var(--color-primary);">{{ estadisticas.metas_activas }}</h4>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body text-center">
-                    <i class="fas fa-trophy fa-2x mb-2"></i>
-                    <h4>{{ estadisticas.metas_completadas }}</h4>
-                    <p class="mb-0">Completadas</p>
-                </div>
+            <div class="card ms-stat">
+                <div class="ms-label">Completadas</div>
+                <h4 class="ms-value" style="color: var(--color-success);">{{ estadisticas.metas_completadas }}</h4>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body text-center">
-                    <i class="fas fa-chart-line fa-2x mb-2"></i>
-                    <h4>${{ estadisticas.capacidad_ahorro_mensual|floatformat:0 }}</h4>
-                    <p class="mb-0">Capacidad Mensual</p>
-                </div>
+            <div class="card ms-stat is-accent">
+                <div class="ms-label">Capacidad mensual</div>
+                <h4 class="ms-value">${{ estadisticas.capacidad_ahorro_mensual|floatformat:0 }}</h4>
             </div>
         </div>
     </div>
 
-    <!-- Progreso general -->
+    {# === Progreso general === #}
     {% if estadisticas.monto_total_objetivos > 0 %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Progreso General</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <div class="progress" style="height: 30px;">
-                                {% with progreso_total=estadisticas.monto_total_ahorrado|floatformat:0|add:0 objetivo_total=estadisticas.monto_total_objetivos|floatformat:0|add:0 %}
-                                    {% if objetivo_total > 0 %}
-                                        {% widthratio progreso_total objetivo_total 100 as porcentaje %}
-                                    {% else %}
-                                        {% with porcentaje=0 %}
-                                        {% endwith %}
-                                    {% endif %}
-                                    <div class="progress-bar bg-success" role="progressbar" 
-                                         style="width: {{ porcentaje }}%" 
-                                         aria-valuenow="{{ porcentaje }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                        {{ porcentaje }}%
-                                    </div>
-                                {% endwith %}
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <h4 class="text-success mb-0">${{ estadisticas.monto_total_ahorrado|floatformat:0 }}</h4>
-                            <small class="text-muted">de ${{ estadisticas.monto_total_objetivos|floatformat:0 }}</small>
-                        </div>
-                    </div>
+        <div class="card mb-4" style="padding: 1.5rem;">
+            <div class="d-flex justify-content-between align-items-baseline mb-3">
+                <h2 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Progreso general</h2>
+                <div style="font-size: 0.875rem;">
+                    <strong>${{ estadisticas.monto_total_ahorrado|floatformat:0 }}</strong>
+                    <span style="color: var(--color-text-soft);">de ${{ estadisticas.monto_total_objetivos|floatformat:0 }}</span>
                 </div>
             </div>
+            <div style="height: 8px; background: var(--color-border); border-radius: 999px; overflow: hidden;">
+                {% widthratio estadisticas.monto_total_ahorrado estadisticas.monto_total_objetivos 100 as porcentaje %}
+                <div style="height: 100%; width: {{ porcentaje }}%; background: var(--color-primary); border-radius: 999px;"></div>
+            </div>
         </div>
-    </div>
     {% endif %}
 
-    <!-- Metas activas -->
+    {# === Metas activas === #}
     {% if metas_activas %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <h4 class="mb-3">Metas Activas</h4>
-            <div class="row">
-                {% for meta in metas_activas %}
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card h-100 border-success">
-                        <div class="card-header bg-success text-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="fas fa-{{ meta.icono }} me-2"></i>
-                                    <strong>{{ meta.nombre }}</strong>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="{% url 'detalle_meta' meta.id %}">Ver detalles</a></li>
-                                        <li><a class="dropdown-item" href="{% url 'editar_meta' meta.id %}">Editar</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="{% url 'pausar_reactivar_meta' meta.id %}">Pausar</a></li>
-                                    </ul>
-                                </div>
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin: 0 0 1rem;">Metas activas</h2>
+        <div class="row g-3 mb-4">
+            {% for meta in metas_activas %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card meta-card">
+                        <div class="meta-card-header">
+                            <h3 class="meta-card-title">
+                                <i class="fas fa-{{ meta.icono }} me-2" style="color: var(--color-primary);"></i>{{ meta.nombre }}
+                            </h3>
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" style="padding: 0.25rem 0.5rem;">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'detalle_meta' meta.id %}">Ver detalles</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'editar_meta' meta.id %}">Editar</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'pausar_reactivar_meta' meta.id %}">Pausar</a></li>
+                                </ul>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <p class="card-text text-muted">{{ meta.descripcion|truncatewords:15 }}</p>
-                            
-                            <!-- Progreso -->
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <small class="text-muted">Progreso</small>
-                                    <small class="text-muted">{{ meta.porcentaje_completado|floatformat:1 }}%</small>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar bg-success" 
-                                         style="width: {{ meta.porcentaje_completado }}%"></div>
-                                </div>
+
+                        {% if meta.descripcion %}
+                            <p style="font-size: 0.875rem; color: var(--color-text-muted); margin: 0;">{{ meta.descripcion|truncatewords:15 }}</p>
+                        {% endif %}
+
+                        <div>
+                            <div class="d-flex justify-content-between mb-1" style="font-size: 0.75rem; color: var(--color-text-soft);">
+                                <span>Progreso</span>
+                                <span>{{ meta.porcentaje_completado|floatformat:0 }}%</span>
                             </div>
-                            
-                            <!-- Montos -->
-                            <div class="row text-center mb-3">
-                                <div class="col-6">
-                                    <div class="text-success">
-                                        <strong>{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_ahorrado|floatformat:0 }}</strong>
-                                    </div>
-                                    <small class="text-muted">Ahorrado ({{ meta.moneda }})</small>
-                                </div>
-                                <div class="col-6">
-                                    <div class="text-primary">
-                                        <strong>{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_objetivo|floatformat:0 }}</strong>
-                                    </div>
-                                    <small class="text-muted">Objetivo ({{ meta.moneda }})</small>
-                                </div>
+                            <div class="meta-card-progress">
+                                <div class="meta-card-progress-bar" style="width: {{ meta.porcentaje_completado }}%;"></div>
                             </div>
-                            
-                            <!-- Tiempo restante -->
-                            <div class="text-center mb-3">
-                                {% if meta.dias_restantes > 0 %}
-                                    <span class="badge bg-info">{{ meta.dias_restantes }} días restantes</span>
-                                {% elif meta.dias_restantes == 0 %}
-                                    <span class="badge bg-warning">¡Vence hoy!</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Meta vencida</span>
-                                {% endif %}
+                        </div>
+
+                        <div class="meta-card-amounts">
+                            <div>
+                                <div style="font-size: 0.7rem; color: var(--color-text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Ahorrado</div>
+                                <div class="meta-card-amount-value">{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_ahorrado|floatformat:0 }}</div>
                             </div>
-                            
-                            <!-- Recomendación minimalista -->
-                            {% for meta_rec in estadisticas.metas_con_recomendaciones %}
-                                {% if meta_rec.meta.id == meta.id %}
-                                <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-lightbulb text-success me-2"></i>
-                                        <small class="text-muted me-2">Recomendado:</small>
-                                        <strong class="text-success">
-                                            {% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta_rec.recomendacion.recomendacion_mensual|floatformat:0 }}/mes
-                                        </strong>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.7rem; color: var(--color-text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Objetivo</div>
+                                <div class="meta-card-amount-value">{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_objetivo|floatformat:0 }}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            {% if meta.dias_restantes > 0 %}
+                                <span class="badge-pill is-info">{{ meta.dias_restantes }} días restantes</span>
+                            {% elif meta.dias_restantes == 0 %}
+                                <span class="badge-pill is-warning">¡Vence hoy!</span>
+                            {% else %}
+                                <span class="badge-pill is-danger">Meta vencida</span>
+                            {% endif %}
+                        </div>
+
+                        {% for meta_rec in estadisticas.metas_con_recomendaciones %}
+                            {% if meta_rec.meta.id == meta.id %}
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: var(--color-border-soft); border-radius: var(--radius-md); font-size: 0.8125rem;">
+                                    <div>
+                                        <span style="color: var(--color-text-soft);">Recomendado:</span>
+                                        <strong>{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta_rec.recomendacion.recomendacion_mensual|floatformat:0 }}/mes</strong>
                                     </div>
                                     {% if meta_rec.recomendacion.es_ajustada %}
-                                    <i class="fas fa-exclamation-triangle text-warning" title="{{ meta_rec.recomendacion.mensaje }}"></i>
+                                        <i class="fas fa-exclamation-triangle" style="color: var(--color-warning);" title="{{ meta_rec.recomendacion.mensaje }}"></i>
                                     {% else %}
-                                    <i class="fas fa-check-circle text-success" title="Meta alcanzable con tu capacidad actual"></i>
+                                        <i class="fas fa-check-circle" style="color: var(--color-success);" title="Meta alcanzable"></i>
                                     {% endif %}
                                 </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                        <div class="card-footer">
-                            <!-- Botón para mostrar formulario de ahorro -->
-                            <button type="button" class="btn btn-success btn-sm w-100 mb-2" onclick="toggleAhorroForm({{ meta.id }})" id="btn-ahorro-{{ meta.id }}">
-                                <i class="fas fa-piggy-bank me-1"></i>Agregar Ahorro
+                            {% endif %}
+                        {% endfor %}
+
+                        <div style="margin-top: auto; padding-top: 0.5rem;">
+                            <button type="button" class="btn btn-primary btn-sm w-100 mb-2" onclick="toggleAhorroForm({{ meta.id }})" id="btn-ahorro-{{ meta.id }}">
+                                <i class="fas fa-piggy-bank me-1"></i>Agregar ahorro
                             </button>
-                            
-                            <!-- Formulario rápido para agregar ahorro (inicialmente oculto) -->
-                            <form method="post" action="{% url 'agregar_ahorro_rapido' meta.id %}" class="mb-2" id="form-ahorro-{{ meta.id }}" style="display: none;">
+
+                            <form method="post" action="{% url 'agregar_ahorro_rapido' meta.id %}" id="form-ahorro-{{ meta.id }}" style="display: none;" class="mb-2">
                                 {% csrf_token %}
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">{% if meta.moneda == 'USD' %}US${% else %}${% endif %}</span>
-                                    <input type="number" name="monto" class="form-control form-control-sm" placeholder="Ingresa el monto" min="1" step="1" required style="font-size: 0.875rem;" id="input-monto-{{ meta.id }}" oninput="this.value = Math.abs(this.value)">
-                                    <button type="submit" class="btn btn-success btn-sm" title="Confirmar ahorro">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAhorroForm({{ meta.id }})" title="Cancelar">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    <input type="number" name="monto" class="form-control" placeholder="Monto" min="1" step="1" required id="input-monto-{{ meta.id }}" oninput="this.value = Math.abs(this.value)">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i></button>
+                                    <button type="button" class="btn btn-light" onclick="toggleAhorroForm({{ meta.id }})"><i class="fas fa-times"></i></button>
                                 </div>
                             </form>
-                            
-                            <a href="{% url 'detalle_meta' meta.id %}" class="btn btn-outline-{{ meta.color }} btn-sm w-100">
-                                <i class="fas fa-eye me-1"></i>Ver Detalle
-                            </a>
+
+                            <a href="{% url 'detalle_meta' meta.id %}" class="btn btn-light btn-sm w-100">Ver detalle</a>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
+            {% endfor %}
         </div>
-    </div>
     {% endif %}
 
-    <!-- Metas completadas recientes -->
+    {# === Metas completadas === #}
     {% if metas_completadas %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <h4 class="mb-3">Metas Completadas Recientemente</h4>
-            <div class="row">
-                {% for meta in metas_completadas %}
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card border-success">
-                        <div class="card-header bg-success text-white">
-                            <i class="{{ meta.icono }} me-2"></i>
-                            <strong>{{ meta.nombre }}</strong>
-                            <i class="fas fa-check-circle float-end"></i>
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin: 2rem 0 1rem;">Completadas recientemente</h2>
+        <div class="row g-3">
+            {% for meta in metas_completadas %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card meta-card">
+                        <div class="meta-card-header">
+                            <h3 class="meta-card-title">
+                                <i class="fas fa-{{ meta.icono }} me-2" style="color: var(--color-success);"></i>{{ meta.nombre }}
+                            </h3>
+                            <span class="badge-pill is-success"><i class="fas fa-check me-1"></i>Completada</span>
                         </div>
-                        <div class="card-body">
-                            <p class="card-text text-muted">{{ meta.descripcion|truncatewords:10 }}</p>
-                            <div class="text-center">
-                                <h4 class="text-success">{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_objetivo|floatformat:0 }} {{ meta.moneda }}</h4>
-                                <small class="text-muted">Completada el {{ meta.fecha_completada|date:"d/m/Y" }}</small>
-                            </div>
-                        </div>
+                        {% if meta.descripcion %}
+                            <p style="font-size: 0.875rem; color: var(--color-text-muted); margin: 0;">{{ meta.descripcion|truncatewords:10 }}</p>
+                        {% endif %}
+                        <div style="font-size: 1.25rem; font-weight: 700; color: var(--color-success);">{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_objetivo|floatformat:0 }} {{ meta.moneda }}</div>
+                        {% if meta.fecha_completada %}
+                            <small style="color: var(--color-text-soft);">Completada el {{ meta.fecha_completada|date:"d/m/Y" }}</small>
+                        {% endif %}
                     </div>
                 </div>
-                {% endfor %}
-            </div>
+            {% endfor %}
         </div>
-    </div>
     {% endif %}
 
-    <!-- Estado vacío -->
+    {# === Estado vacio === #}
     {% if not metas_activas and not metas_completadas %}
-    <div class="row">
-        <div class="col-12">
-            <div class="text-center py-5">
-                <div class="display-1 text-muted mb-4">
-                    <i class="fas fa-piggy-bank"></i>
-                </div>
-                <h3 class="text-muted mb-3">¡Comienza tu viaje de ahorro!</h3>
-                <p class="text-muted mb-4">Crea tu primera meta de ahorro y recibe recomendaciones personalizadas basadas en tu historial de gastos.</p>
-                <a href="{% url 'crear_meta_ahorro' %}" class="btn btn-success btn-lg">
-                    <i class="fas fa-plus me-2"></i>Crear Mi Primera Meta
+        <div class="card" style="padding: 4rem 2rem; text-align: center;">
+            <div style="font-size: 3rem; color: var(--color-text-soft); opacity: 0.4; margin-bottom: 1rem;">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Empezá tu primera meta</h3>
+            <p style="color: var(--color-text-soft); max-width: 480px; margin: 0 auto 1.5rem;">
+                Creá una meta de ahorro y recibí recomendaciones personalizadas según tu historial de gastos.
+            </p>
+            <div>
+                <a href="{% url 'crear_meta_ahorro' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Crear mi primera meta
                 </a>
             </div>
         </div>
-    </div>
     {% endif %}
 </div>
 {% endblock %}

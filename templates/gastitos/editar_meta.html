@@ -1,166 +1,85 @@
 {% extends 'base.html' %}
 
-{% block title %}Editar Meta de Ahorro{% endblock %}
+{% block title %}Editar meta · {{ meta.nombre }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>
-                        Editar Meta de Ahorro
-                    </h4>
+<div class="container" style="padding: 3rem 0; max-width: 720px;">
+
+    {# === Form === #}
+    <div class="card mb-4" style="padding: 2.5rem;">
+        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Editar meta</span>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 1.75rem;">{{ meta.nombre }}</h1>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label for="{{ form.nombre.id_for_label }}" class="form-label">{{ form.nombre.label }}</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.nombre.id_for_label }}" class="form-label">
-                                    <i class="fas fa-tag me-1"></i>
-                                    {{ form.nombre.label }}
-                                </label>
-                                {{ form.nombre }}
-                                {% if form.nombre.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.nombre.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.moneda.id_for_label }}" class="form-label">
-                                    <i class="fas fa-coins me-1"></i>
-                                    {{ form.moneda.label }}
-                                </label>
-                                {{ form.moneda }}
-                                {% if form.moneda.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.moneda.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
-                                <i class="fas fa-align-left me-1"></i>
-                                {{ form.descripcion.label }}
-                            </label>
-                            {{ form.descripcion }}
-                            {% if form.descripcion.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.descripcion.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.fecha_objetivo.id_for_label }}" class="form-label">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    {{ form.fecha_objetivo.label }}
-                                </label>
-                                {{ form.fecha_objetivo }}
-                                {% if form.fecha_objetivo.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.fecha_objetivo.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.icono.id_for_label }}" class="form-label">
-                                    <i class="fas fa-icons me-1"></i>
-                                    {{ form.icono.label }}
-                                </label>
-                                {{ form.icono }}
-                                {% if form.icono.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.icono.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.color.id_for_label }}" class="form-label">
-                                    <i class="fas fa-palette me-1"></i>
-                                    {{ form.color.label }}
-                                </label>
-                                {{ form.color }}
-                                {% if form.color.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.color.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.estado.id_for_label }}" class="form-label">
-                                    <i class="fas fa-toggle-on me-1"></i>
-                                    {{ form.estado.label }}
-                                </label>
-                                {{ form.estado }}
-                                {% if form.estado.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.estado.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'detalle_meta' meta.id %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>
-                                Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>
-                                Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
+                <div class="col-md-4">
+                    <label for="{{ form.moneda.id_for_label }}" class="form-label">{{ form.moneda.label }}</label>
+                    {{ form.moneda }}
                 </div>
             </div>
-            
-            <!-- Información actual de la meta -->
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-info"></i>
-                        Información Actual de la Meta
-                    </h6>
+
+            <div class="mb-3">
+                <label for="{{ form.descripcion.id_for_label }}" class="form-label">{{ form.descripcion.label }}</label>
+                {{ form.descripcion }}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ form.fecha_objetivo.id_for_label }}" class="form-label">{{ form.fecha_objetivo.label }}</label>
+                    {{ form.fecha_objetivo }}
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>Monto Objetivo:</strong> 
-                                {% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_objetivo|floatformat:0 }}
-                            </p>
-                            <p><strong>Monto Ahorrado:</strong> 
-                                {% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_ahorrado|floatformat:0 }}
-                            </p>
-                            <p><strong>Progreso:</strong> {{ meta.porcentaje_completado|floatformat:1 }}%</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Fecha de Creación:</strong> {{ meta.fecha_creacion|date:"d/m/Y" }}</p>
-                            <p><strong>Estado Actual:</strong> 
-                                <span class="badge bg-{% if meta.estado == 'activa' %}success{% elif meta.estado == 'pausada' %}warning{% else %}secondary{% endif %}">
-                                    {{ meta.get_estado_display }}
-                                </span>
-                            </p>
-                            {% if meta.dias_restantes >= 0 %}
-                                <p><strong>Días Restantes:</strong> {{ meta.dias_restantes }} días</p>
-                            {% else %}
-                                <p><strong>Estado:</strong> <span class="text-danger">Vencida</span></p>
-                            {% endif %}
-                        </div>
-                    </div>
+                <div class="col-md-6">
+                    <label for="{{ form.icono.id_for_label }}" class="form-label">{{ form.icono.label }}</label>
+                    {{ form.icono }}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="{{ form.color.id_for_label }}" class="form-label">{{ form.color.label }}</label>
+                    {{ form.color }}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.estado.id_for_label }}" class="form-label">{{ form.estado.label }}</label>
+                    {{ form.estado }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'detalle_meta' meta.id %}" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+
+    {# === Info actual === #}
+    <div class="card" style="padding: 1.75rem;">
+        <h2 style="font-size: 0.9rem; font-weight: 700; margin: 0 0 1rem; letter-spacing: -0.01em;">Información actual</h2>
+        <div class="row g-3" style="font-size: 0.875rem;">
+            <div class="col-md-6">
+                <div style="margin-bottom: 0.5rem;"><span style="color: var(--color-text-soft);">Objetivo:</span> <strong>{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_objetivo|floatformat:0 }}</strong></div>
+                <div style="margin-bottom: 0.5rem;"><span style="color: var(--color-text-soft);">Ahorrado:</span> <strong>{% if meta.moneda == 'USD' %}US${% else %}${% endif %}{{ meta.monto_ahorrado|floatformat:0 }}</strong></div>
+                <div><span style="color: var(--color-text-soft);">Progreso:</span> <strong>{{ meta.porcentaje_completado|floatformat:1 }}%</strong></div>
+            </div>
+            <div class="col-md-6">
+                <div style="margin-bottom: 0.5rem;"><span style="color: var(--color-text-soft);">Creada:</span> <strong>{{ meta.fecha_creacion|date:"d/m/Y" }}</strong></div>
+                <div style="margin-bottom: 0.5rem;">
+                    <span style="color: var(--color-text-soft);">Estado:</span>
+                    <span class="badge-pill {% if meta.estado == 'activa' %}is-success{% elif meta.estado == 'pausada' %}is-warning{% else %}is-info{% endif %}" style="display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; {% if meta.estado == 'activa' %}background: #dcfce7; color: #166534;{% elif meta.estado == 'pausada' %}background: #fef3c7; color: #92400e;{% else %}background: #f3f4f6; color: #374151;{% endif %}">{{ meta.get_estado_display }}</span>
+                </div>
+                <div>
+                    {% if meta.dias_restantes >= 0 %}
+                        <span style="color: var(--color-text-soft);">Días restantes:</span> <strong>{{ meta.dias_restantes }}</strong>
+                    {% else %}
+                        <span style="color: var(--color-danger); font-weight: 600;">Vencida</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
