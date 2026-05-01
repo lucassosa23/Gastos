@@ -1,58 +1,190 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-{% block title %}Iniciar Sesión{% endblock %}
+{% block title %}Gastitos · Control financiero personal{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="text-center">Iniciar Sesión</h3>
+<style>
+    .landing-hero {
+        padding: 4rem 0 5rem;
+    }
+    .landing-eyebrow {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        color: var(--color-primary);
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+    }
+    .landing-h1 {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        color: var(--color-text);
+        margin-bottom: 1.5rem;
+    }
+    .landing-h1 em {
+        font-style: italic;
+        color: var(--color-primary);
+    }
+    .landing-sub {
+        font-size: 1.125rem;
+        line-height: 1.65;
+        color: var(--color-text-muted);
+        margin-bottom: 2.5rem;
+        max-width: 480px;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 2rem 0;
+        display: grid;
+        gap: 0.75rem;
+    }
+    .feature-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        color: var(--color-text-muted);
+    }
+    .feature-list i {
+        color: var(--color-primary);
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    .login-card {
+        background: var(--color-bg-card);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-xl);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+    }
+    .login-card h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    .login-card .login-sub {
+        font-size: 0.875rem;
+        color: var(--color-text-soft);
+        margin-bottom: 1.75rem;
+    }
+    .login-card .form-label {
+        font-size: 0.8125rem;
+    }
+
+    .saldo-mock-card {
+        background: var(--color-primary-soft);
+        border: 1px solid var(--color-primary-soft-strong);
+        border-radius: var(--radius-xl);
+        padding: 1.5rem;
+        margin-top: 2rem;
+        max-width: 380px;
+    }
+    .saldo-mock-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--color-primary-hover);
+        opacity: 0.7;
+        margin-bottom: 0.4rem;
+    }
+    .saldo-mock-amount {
+        font-size: 2.25rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        color: var(--color-primary-hover);
+        margin-bottom: 1rem;
+    }
+    .saldo-mock-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: var(--color-primary-hover);
+        padding: 0.4rem 0;
+        border-top: 1px solid rgba(67, 56, 202, 0.15);
+    }
+
+    @media (max-width: 991px) {
+        .landing-hero { padding: 2.5rem 0 3rem; }
+        .login-card { margin-top: 2rem; }
+    }
+</style>
+
+<div class="container landing-hero">
+    <div class="row align-items-start gx-5">
+        <div class="col-lg-7">
+            <span class="landing-eyebrow">Control financiero personal</span>
+            <h1 class="landing-h1">
+                Tomá el control real<br>
+                de <em>tus gastos.</em>
+            </h1>
+            <p class="landing-sub">
+                Registrá gastos diarios, visualizá tu saldo del mes, planificá el siguiente y ahorrá con metas concretas — todo en una app simple, sin distracciones.
+            </p>
+
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i><span>Procesamiento OCR de comprobantes (Tesseract)</span></li>
+                <li><i class="fas fa-check"></i><span>Gastos fijos recurrentes y planificación mensual</span></li>
+                <li><i class="fas fa-check"></i><span>Modo Ahorro con metas, fecha límite y progreso</span></li>
+                <li><i class="fas fa-check"></i><span>Calendario interactivo + gráficos de evolución</span></li>
+            </ul>
+
+            <div class="saldo-mock-card">
+                <div class="saldo-mock-label">Saldo disponible (ejemplo)</div>
+                <div class="saldo-mock-amount">$48.500</div>
+                <div class="saldo-mock-row">
+                    <span>Supermercado</span><span>−$10.490</span>
                 </div>
-                <div class="card-body">
-                    <form method="post" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="{{ form.username.id_for_label }}" class="form-label">Usuario:</label>
-                            <div class="input-group">
-                                {{ form.username|add_class:"form-control" }}
-                                <span class="input-group-text validation-icon">
-                                    <i class="fas fa-user text-muted"></i>
-                                </span>
-                            </div>
-                            {% if form.username.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.username.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña:</label>
-                            <div class="input-group">
-                                {{ form.password|add_class:"form-control" }}
-                                <span class="input-group-text validation-icon">
-                                    <i class="fas fa-lock text-muted"></i>
-                                </span>
-                            </div>
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.password.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {{ form.non_field_errors.0 }}
-                            </div>
+                <div class="saldo-mock-row">
+                    <span>Luz</span><span>−$4.230</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="login-card">
+                <h2>Iniciar sesión</h2>
+                <p class="login-sub">Bienvenido de vuelta. Ingresá tus datos para acceder.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
+                        {{ form.username|add_class:"form-control" }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
                         {% endif %}
-                        <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <p>¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a></p>
                     </div>
-                </div>
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
+                        {{ form.password|add_class:"form-control" }}
+                        {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 mb-3 small">
+                            {{ form.non_field_errors.0 }}
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
+                </form>
+
+                <hr style="margin: 1.5rem 0; border-color: var(--color-border-soft);">
+
+                <p class="text-center mb-0" style="font-size: 0.875rem; color: var(--color-text-soft);">
+                    ¿No tenés cuenta?
+                    <a href="{% url 'registro' %}" style="color: var(--color-primary); font-weight: 600; text-decoration: none;">Crear cuenta</a>
+                </p>
             </div>
         </div>
     </div>
