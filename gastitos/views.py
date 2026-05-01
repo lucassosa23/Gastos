@@ -39,6 +39,7 @@ from .utils import (
     randomize_filename,
 )
 from .utils_estadisticas import guardar_estadisticas_mensuales, obtener_estadisticas_mensuales
+from .services import dashboard as dashboard_service
 from django.contrib.admin.views.decorators import staff_member_required
 
 logger = logging.getLogger(__name__)
@@ -955,164 +956,41 @@ def editar_gasto(request):
 
 @login_required
 def dashboard(request):
-    perfil, created = PerfilUsuario.objects.get_or_create(user=request.user)
-    
+    perfil, _ = PerfilUsuario.objects.get_or_create(user=request.user)
 
-    
-    # Verificar metas vencidas y obtener estadísticas de ahorro
     verificar_metas_vencidas(request.user)
     estadisticas_ahorro = obtener_estadisticas_ahorro_usuario(request.user)
-    
-    # Gastos por mes con detalles
-    gastos_por_mes = Gasto.objects.filter(usuario=request.user).annotate(
-        mes=TruncMonth('fecha')
-    ).values('mes').annotate(
-        total=Sum('monto')
-    ).order_by('mes')
-    
-    # Gastos del mes actual
-    from datetime import datetime
-    mes_actual = datetime.now().replace(day=1)
-    gastos_mes_actual = Gasto.objects.filter(
-        usuario=request.user,
-        fecha__gte=mes_actual
+
+    # Aggregate por mes — lo materializo a list porque se itera dos
+    # veces (en datos_grafico_mensual y en resumen_ultimos_meses).
+    gastos_por_mes = list(
+        Gasto.objects.filter(usuario=request.user)
+        .annotate(mes=TruncMonth('fecha'))
+        .values('mes')
+        .annotate(total=Sum('monto'))
+        .order_by('mes')
     )
-    
-    total_mes_actual = gastos_mes_actual.aggregate(Sum('monto'))['monto__sum'] or Decimal('0')
-    
-    # Saldo restante del mes
+
+    # Cifras del mes actual.
+    gastos_mes_actual_qs = dashboard_service.gastos_mes_actual_qs(request.user)
+    total_mes_actual = (
+        gastos_mes_actual_qs.aggregate(Sum('monto'))['monto__sum']
+        or Decimal('0')
+    )
     saldo_restante = perfil.salario_mensual - total_mes_actual
-    
-    # Calcular cuánto puede gastar por fin de semana
-    # Calculamos los fines de semana restantes en el mes actual
-    hoy = datetime.now().date()
-    ultimo_dia_mes = (hoy.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-    dias_restantes = (ultimo_dia_mes - hoy).days
-    
-    # Contar cuántos fines de semana (pares de días) quedan en el mes
-    # Un fin de semana es un par de días (sábado y domingo)
-    fines_semana_restantes = 0
-    dias_fin_semana = []
-    
-    for i in range(dias_restantes + 1):
-        dia = hoy + timedelta(days=i)
-        # 5 = sábado, 6 = domingo en la representación de weekday()
-        if dia.weekday() >= 5:
-            dias_fin_semana.append(dia.weekday())
-    
-    # Contar pares completos (sábado y domingo)
-    sabados = dias_fin_semana.count(5)
-    domingos = dias_fin_semana.count(6)
-    fines_semana_restantes = min(sabados, domingos)
-    
-    # Si hay un sábado o domingo sin pareja, contarlo como medio fin de semana
-    if abs(sabados - domingos) > 0:
-        fines_semana_restantes += 0.5
-    
-    # Si no quedan fines de semana, asumimos al menos 1 para evitar división por cero
-    if fines_semana_restantes == 0:
-        fines_semana_restantes = 1
-        
-    gasto_por_finde = saldo_restante / Decimal(str(fines_semana_restantes)) if saldo_restante > 0 else 0
-    
-    # Verificar si se acerca al límite (200,000 pesos restantes)
-    advertencia_limite = saldo_restante <= 200000 and saldo_restante > 0
-    
-    # Obtener vencimientos próximos (dentro de 3 días)
-    vencimientos_proximos = Vencimiento.objects.filter(
-        usuario=request.user,
-        activo=True
-    ).filter(
-        fecha_vencimiento__gte=datetime.now().date(),
-        fecha_vencimiento__lte=datetime.now().date() + timedelta(days=3)
-    ).order_by('fecha_vencimiento')
-    
-    # Preparar datos para gráficos
-    meses_labels = []
-    totales_data = []
-    saldos_data = []
-    
-    # Chart.js consume number arrays via JSON, no Decimal strings;
-    # esta es la unica conversion a float que sobrevive en la vista.
-    # Como son datos de visualizacion (no se hacen cuentas posteriores),
-    # la perdida de precision al pintar barras es irrelevante.
-    for item in gastos_por_mes:
-        meses_labels.append(item['mes'].strftime('%B %Y'))
-        totales_data.append(float(item['total'] or 0))
-        saldos_data.append(float(perfil.salario_mensual - (item['total'] or Decimal('0'))))
-    
-    # Preparar datos para el calendario - organizar gastos por mes y día
-    todos_los_gastos = Gasto.objects.filter(usuario=request.user).order_by('fecha')
-    gastos_calendario = {}
-    
-    for gasto in todos_los_gastos:
-        mes_key = gasto.fecha.strftime('%Y-%m')
-        if mes_key not in gastos_calendario:
-            gastos_calendario[mes_key] = []
-        
-        gastos_calendario[mes_key].append({
-            'fecha': gasto.fecha.isoformat(),
-            'descripcion': gasto.descripcion,
-            'monto': str(gasto.monto)
-        })
-    
-    # Crear historial simple para los últimos 6 meses
-    historial_simple = []
-    meses_nombres = [
-        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ]
-    
-    # Obtener los últimos 6 meses de datos
-    ultimos_6_meses = gastos_por_mes[-6:] if len(gastos_por_mes) >= 6 else gastos_por_mes
-    
-    total_gastos_periodo = Decimal('0')
-    mes_mayor_gasto = {'mes': '', 'total': Decimal('0')}
-    # None como centinela "no se encontro ningun mes con gasto > 0".
-    # Antes era float('inf'), que mezclaba un float en una estructura
-    # cuyo 'total' final es Decimal cuando hay datos reales.
-    mes_menor_gasto = {'mes': '', 'total': None}
 
-    for item in ultimos_6_meses:
-        # total_gastos como Decimal end-to-end: el modelo guarda Decimal,
-        # los calculos de saldo deben preservar precision sin pasar por
-        # float (que acumula error en sumas/restas de centavos).
-        total_gastos = item['total'] or Decimal('0')
-        total_gastos_periodo += total_gastos
-        saldo_restante_mes = perfil.salario_mensual - total_gastos
-        if perfil.salario_mensual > 0:
-            porcentaje_usado = (total_gastos / perfil.salario_mensual) * Decimal('100')
-        else:
-            porcentaje_usado = Decimal('0')
+    gasto_por_finde = dashboard_service.calcular_gasto_por_finde(saldo_restante)
+    advertencia_limite = 0 < saldo_restante <= 200000
 
-        mes_nombre = meses_nombres[item['mes'].month - 1]
-
-        # Encontrar mes con mayor y menor gasto
-        if total_gastos > mes_mayor_gasto['total']:
-            mes_mayor_gasto = {'mes': mes_nombre, 'total': total_gastos}
-        if total_gastos > 0 and (
-            mes_menor_gasto['total'] is None
-            or total_gastos < mes_menor_gasto['total']
-        ):
-            mes_menor_gasto = {'mes': mes_nombre, 'total': total_gastos}
-
-        historial_simple.append({
-            'mes_nombre': mes_nombre,
-            'total_gastos': total_gastos,
-            'saldo_restante': saldo_restante_mes,
-            'porcentaje_usado': min(porcentaje_usado, Decimal('100')),  # Limitar a 100%
-        })
-
-    # Calcular promedio mensual (Decimal)
-    promedio_mensual = (
-        total_gastos_periodo / len(ultimos_6_meses)
-        if ultimos_6_meses else Decimal('0')
+    # Datos para componentes del template.
+    meses_labels, totales_data, saldos_data = dashboard_service.datos_grafico_mensual(
+        gastos_por_mes, perfil.salario_mensual,
     )
-    
-    # Si ningun mes tuvo gastos > 0, mostrar valor por defecto
-    if mes_menor_gasto['total'] is None:
-        mes_menor_gasto = {'mes': 'N/A', 'total': Decimal('0')}
-    
+    gastos_calendario = dashboard_service.gastos_para_calendario(request.user)
+    resumen = dashboard_service.resumen_ultimos_meses(
+        gastos_por_mes, perfil.salario_mensual,
+    )
+
     context = {
         'gastos_mensuales': gastos_por_mes,
         'perfil': perfil,
@@ -1120,20 +998,15 @@ def dashboard(request):
         'saldo_restante': saldo_restante,
         'gasto_por_finde': gasto_por_finde,
         'advertencia_limite': advertencia_limite,
-        'vencimientos_proximos': vencimientos_proximos,
+        'vencimientos_proximos': dashboard_service.vencimientos_proximos(request.user),
         'meses_labels': json.dumps(meses_labels),
         'totales_data': json.dumps(totales_data),
         'saldos_data': json.dumps(saldos_data),
-        'gastos_recientes': gastos_mes_actual.order_by('-fecha')[:10],
+        'gastos_recientes': gastos_mes_actual_qs.order_by('-fecha')[:10],
         'gastos_json': gastos_calendario,
-        'historial_simple': historial_simple,
-        'promedio_mensual': promedio_mensual,
-        'mes_mayor_gasto': mes_mayor_gasto['mes'],
-        'mes_menor_gasto': mes_menor_gasto['mes'],
-
         'estadisticas_ahorro': estadisticas_ahorro,
+        **resumen,  # historial_simple, promedio_mensual, mes_mayor_gasto, mes_menor_gasto
     }
-    
     return render(request, 'dashboard.html', context)
 
 @login_required
