@@ -586,7 +586,7 @@ def index(request):
                                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                                         return JsonResponse({
                                             'success': True,
-                                            'total_agregado': float(resultado['monto']),
+                                            'total_agregado': str(resultado['monto']),
                                             'descripcion': resultado['descripcion'],
                                             'mensaje': f'Estado de cuenta procesado exitosamente. Total: ${resultado["monto"]:.2f}'
                                         })
@@ -991,6 +991,10 @@ def dashboard(request):
     totales_data = []
     saldos_data = []
     
+    # Chart.js consume number arrays via JSON, no Decimal strings;
+    # esta es la unica conversion a float que sobrevive en la vista.
+    # Como son datos de visualizacion (no se hacen cuentas posteriores),
+    # la perdida de precision al pintar barras es irrelevante.
     for item in gastos_por_mes:
         meses_labels.append(item['mes'].strftime('%B %Y'))
         totales_data.append(float(item['total'] or 0))
@@ -1202,17 +1206,17 @@ def gastos_fijos(request):
             'gastos_fijos': [{
                 'id': gf.id,
                 'descripcion': gf.descripcion,
-                'monto': float(gf.monto),
+                'monto': str(gf.monto),
             } for gf in gastos_fijos]
         })
-    
+
     # Respuesta por defecto
     form = GastoFijoForm()
     return JsonResponse({
         'gastos_fijos': [{
             'id': gf.id,
             'descripcion': gf.descripcion,
-            'monto': float(gf.monto)
+            'monto': str(gf.monto),
         } for gf in gastos_fijos]
     })
 
