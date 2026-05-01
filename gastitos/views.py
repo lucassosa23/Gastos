@@ -586,7 +586,7 @@ def index(request):
                                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                                         return JsonResponse({
                                             'success': True,
-                                            'total_agregado': float(resultado['monto']),
+                                            'total_agregado': str(resultado['monto']),
                                             'descripcion': resultado['descripcion'],
                                             'mensaje': f'Estado de cuenta procesado exitosamente. Total: ${resultado["monto"]:.2f}'
                                         })
@@ -854,46 +854,63 @@ def eliminar_gasto(request, gasto_id):
 
 @login_required
 def editar_gasto(request):
-    if request.method == 'POST':
-        gasto_id = request.POST.get('gasto_id')
-        gasto = get_object_or_404(Gasto, id=gasto_id, usuario=request.user)
-        
-        # Obtener el perfil del usuario
-        perfil = get_object_or_404(PerfilUsuario, user=request.user)
-        
-        # Obtener los nuevos valores
-        nueva_descripcion = request.POST.get('descripcion')
-        nuevo_monto = request.POST.get('monto')
-        try:
-            nuevo_monto = float(nuevo_monto)
-            
-            # Calcular la diferencia de monto
-            diferencia_monto = nuevo_monto - float(gasto.monto)
-            
-            # Verificar si hay saldo suficiente para el incremento
+    if request.method != 'POST':
+        return JsonResponse(
+            {'success': False, 'error': 'Método no permitido'},
+            status=405,
+        )
+
+    gasto_id = request.POST.get('gasto_id')
+    nueva_descripcion = request.POST.get('descripcion')
+
+    # Parseo de Decimal fuera del lock: si el monto es invalido no
+    # tiene sentido tomar el lock del perfil.
+    try:
+        nuevo_monto = Decimal(str(request.POST.get('monto', '')))
+    except (InvalidOperation, TypeError):
+        return JsonResponse(
+            {'success': False, 'error': 'Monto inválido'},
+            status=400,
+        )
+
+    # Lock + check + save en una transaccion. Mismo patron que
+    # agregar_gasto: dos requests concurrentes que incrementan el monto
+    # del gasto no pueden ambos pasar el check de saldo disponible.
+    try:
+        with transaction.atomic():
+            gasto = get_object_or_404(
+                Gasto, id=gasto_id, usuario=request.user
+            )
+            perfil = (
+                PerfilUsuario.objects
+                .select_for_update()
+                .get(user=request.user)
+            )
+            diferencia_monto = nuevo_monto - gasto.monto
             if diferencia_monto > 0 and diferencia_monto > perfil.saldo_disponible:
                 return JsonResponse({
-                    'success': False, 
-                    'error': f'Saldo insuficiente para el incremento. Disponible: ${perfil.saldo_disponible:.2f}'
+                    'success': False,
+                    'error': f'Saldo insuficiente para el incremento. Disponible: ${perfil.saldo_disponible:.2f}',
                 })
-            
-            # Actualizar el gasto
             gasto.descripcion = nueva_descripcion
             gasto.monto = nuevo_monto
             gasto.save()
-            
-            return JsonResponse({
-                'success': True, 
-                'message': 'Gasto actualizado correctamente'
-            })
-            
-        except ValueError:
-            return JsonResponse({
-                'success': False, 
-                'error': 'Monto inválido'
-            })
-    
-    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    except PerfilUsuario.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Perfil de usuario no encontrado'},
+            status=404,
+        )
+    except Exception:
+        logger.exception("editar_gasto fallo")
+        return JsonResponse(
+            {'success': False, 'error': 'Error al procesar la solicitud'},
+            status=500,
+        )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Gasto actualizado correctamente',
+    })
 
 @login_required
 def dashboard(request):
@@ -974,6 +991,10 @@ def dashboard(request):
     totales_data = []
     saldos_data = []
     
+    # Chart.js consume number arrays via JSON, no Decimal strings;
+    # esta es la unica conversion a float que sobrevive en la vista.
+    # Como son datos de visualizacion (no se hacen cuentas posteriores),
+    # la perdida de precision al pintar barras es irrelevante.
     for item in gastos_por_mes:
         meses_labels.append(item['mes'].strftime('%B %Y'))
         totales_data.append(float(item['total'] or 0))
@@ -1004,37 +1025,52 @@ def dashboard(request):
     # Obtener los últimos 6 meses de datos
     ultimos_6_meses = gastos_por_mes[-6:] if len(gastos_por_mes) >= 6 else gastos_por_mes
     
-    total_gastos_periodo = 0
-    mes_mayor_gasto = {'mes': '', 'total': 0}
-    mes_menor_gasto = {'mes': '', 'total': float('inf')}
-    
+    total_gastos_periodo = Decimal('0')
+    mes_mayor_gasto = {'mes': '', 'total': Decimal('0')}
+    # None como centinela "no se encontro ningun mes con gasto > 0".
+    # Antes era float('inf'), que mezclaba un float en una estructura
+    # cuyo 'total' final es Decimal cuando hay datos reales.
+    mes_menor_gasto = {'mes': '', 'total': None}
+
     for item in ultimos_6_meses:
-        total_gastos = float(item['total'] or 0)
+        # total_gastos como Decimal end-to-end: el modelo guarda Decimal,
+        # los calculos de saldo deben preservar precision sin pasar por
+        # float (que acumula error en sumas/restas de centavos).
+        total_gastos = item['total'] or Decimal('0')
         total_gastos_periodo += total_gastos
-        saldo_restante_mes = perfil.salario_mensual - Decimal(str(total_gastos))
-        porcentaje_usado = (total_gastos / float(perfil.salario_mensual) * 100) if perfil.salario_mensual > 0 else 0
-        
+        saldo_restante_mes = perfil.salario_mensual - total_gastos
+        if perfil.salario_mensual > 0:
+            porcentaje_usado = (total_gastos / perfil.salario_mensual) * Decimal('100')
+        else:
+            porcentaje_usado = Decimal('0')
+
         mes_nombre = meses_nombres[item['mes'].month - 1]
-        
+
         # Encontrar mes con mayor y menor gasto
         if total_gastos > mes_mayor_gasto['total']:
             mes_mayor_gasto = {'mes': mes_nombre, 'total': total_gastos}
-        if total_gastos < mes_menor_gasto['total'] and total_gastos > 0:
+        if total_gastos > 0 and (
+            mes_menor_gasto['total'] is None
+            or total_gastos < mes_menor_gasto['total']
+        ):
             mes_menor_gasto = {'mes': mes_nombre, 'total': total_gastos}
-        
+
         historial_simple.append({
             'mes_nombre': mes_nombre,
             'total_gastos': total_gastos,
             'saldo_restante': saldo_restante_mes,
-            'porcentaje_usado': min(porcentaje_usado, 100)  # Limitar a 100%
+            'porcentaje_usado': min(porcentaje_usado, Decimal('100')),  # Limitar a 100%
         })
+
+    # Calcular promedio mensual (Decimal)
+    promedio_mensual = (
+        total_gastos_periodo / len(ultimos_6_meses)
+        if ultimos_6_meses else Decimal('0')
+    )
     
-    # Calcular promedio mensual
-    promedio_mensual = total_gastos_periodo / len(ultimos_6_meses) if ultimos_6_meses else 0
-    
-    # Si no hay datos suficientes, ajustar valores por defecto
-    if mes_menor_gasto['total'] == float('inf'):
-        mes_menor_gasto = {'mes': 'N/A', 'total': 0}
+    # Si ningun mes tuvo gastos > 0, mostrar valor por defecto
+    if mes_menor_gasto['total'] is None:
+        mes_menor_gasto = {'mes': 'N/A', 'total': Decimal('0')}
     
     context = {
         'gastos_mensuales': gastos_por_mes,
@@ -1170,17 +1206,17 @@ def gastos_fijos(request):
             'gastos_fijos': [{
                 'id': gf.id,
                 'descripcion': gf.descripcion,
-                'monto': float(gf.monto),
+                'monto': str(gf.monto),
             } for gf in gastos_fijos]
         })
-    
+
     # Respuesta por defecto
     form = GastoFijoForm()
     return JsonResponse({
         'gastos_fijos': [{
             'id': gf.id,
             'descripcion': gf.descripcion,
-            'monto': float(gf.monto)
+            'monto': str(gf.monto),
         } for gf in gastos_fijos]
     })
 
