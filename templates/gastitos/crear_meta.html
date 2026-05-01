@@ -1,166 +1,89 @@
 {% extends 'base.html' %}
 
-{% block title %}Crear Meta de Ahorro{% endblock %}
+{% block title %}Crear meta de ahorro · Gastitos{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-piggy-bank me-2"></i>
-                        Crear Nueva Meta de Ahorro
-                    </h4>
+<div class="container" style="padding: 3rem 0; max-width: 720px;">
+    <div class="card mb-4" style="padding: 2.5rem;">
+        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Modo Ahorro</span>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 1.75rem;">Nueva meta de ahorro</h1>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label for="{{ form.nombre.id_for_label }}" class="form-label">{{ form.nombre.label }}</label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}<div class="text-danger small mt-1">{{ form.nombre.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.nombre.id_for_label }}" class="form-label">
-                                    <i class="fas fa-tag me-1"></i>
-                                    {{ form.nombre.label }}
-                                </label>
-                                {{ form.nombre }}
-                                {% if form.nombre.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.nombre.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.moneda.id_for_label }}" class="form-label">
-                                    <i class="fas fa-coins me-1"></i>
-                                    {{ form.moneda.label }}
-                                </label>
-                                {{ form.moneda }}
-                                {% if form.moneda.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.moneda.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.monto_objetivo.id_for_label }}" class="form-label">
-                                <i class="fas fa-dollar-sign me-1"></i>
-                                {{ form.monto_objetivo.label }}
-                            </label>
-                            {{ form.monto_objetivo }}
-                            {% if form.monto_objetivo.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.monto_objetivo.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
-                                <i class="fas fa-align-left me-1"></i>
-                                {{ form.descripcion.label }}
-                            </label>
-                            {{ form.descripcion }}
-                            {% if form.descripcion.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.descripcion.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.fecha_objetivo.id_for_label }}" class="form-label">
-                                    <i class="fas fa-calendar me-1"></i>
-                                    {{ form.fecha_objetivo.label }}
-                                </label>
-                                {{ form.fecha_objetivo }}
-                                {% if form.fecha_objetivo.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.fecha_objetivo.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.icono.id_for_label }}" class="form-label">
-                                    <i class="fas fa-icons me-1"></i>
-                                    {{ form.icono.label }}
-                                </label>
-                                {{ form.icono }}
-                                {% if form.icono.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {{ form.icono.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.color.id_for_label }}" class="form-label">
-                                <i class="fas fa-palette me-1"></i>
-                                {{ form.color.label }}
-                            </label>
-                            {{ form.color }}
-                            {% if form.color.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.color.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'modo_ahorro' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i>
-                                Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save me-1"></i>
-                                Crear Meta
-                            </button>
-                        </div>
-                    </form>
+                <div class="col-md-4">
+                    <label for="{{ form.moneda.id_for_label }}" class="form-label">{{ form.moneda.label }}</label>
+                    {{ form.moneda }}
+                    {% if form.moneda.errors %}<div class="text-danger small mt-1">{{ form.moneda.errors.0 }}</div>{% endif %}
                 </div>
             </div>
-            
-            <!-- Consejos para crear metas -->
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">
-                        <i class="fas fa-lightbulb me-2 text-warning"></i>
-                        Consejos para crear una meta exitosa
-                    </h6>
+
+            <div class="mb-3">
+                <label for="{{ form.monto_objetivo.id_for_label }}" class="form-label">{{ form.monto_objetivo.label }}</label>
+                {{ form.monto_objetivo }}
+                {% if form.monto_objetivo.errors %}<div class="text-danger small mt-1">{{ form.monto_objetivo.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.descripcion.id_for_label }}" class="form-label">{{ form.descripcion.label }}</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}<div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ form.fecha_objetivo.id_for_label }}" class="form-label">{{ form.fecha_objetivo.label }}</label>
+                    {{ form.fecha_objetivo }}
+                    {% if form.fecha_objetivo.errors %}<div class="text-danger small mt-1">{{ form.fecha_objetivo.errors.0 }}</div>{% endif %}
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    <strong>Sé específico:</strong> Define claramente qué quieres lograr
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    <strong>Establece plazos realistas:</strong> Da tiempo suficiente para alcanzar tu meta
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    <strong>Monto alcanzable:</strong> Considera tus ingresos y gastos actuales
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-check text-success me-2"></i>
-                                    <strong>Motívate:</strong> Elige un ícono y color que te inspiren
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="col-md-6">
+                    <label for="{{ form.icono.id_for_label }}" class="form-label">{{ form.icono.label }}</label>
+                    {{ form.icono }}
+                    {% if form.icono.errors %}<div class="text-danger small mt-1">{{ form.icono.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="{{ form.color.id_for_label }}" class="form-label">{{ form.color.label }}</label>
+                {{ form.color }}
+                {% if form.color.errors %}<div class="text-danger small mt-1">{{ form.color.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'modo_ahorro' %}" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Crear meta</button>
+            </div>
+        </form>
+    </div>
+
+    {# === Tips === #}
+    <div class="card" style="padding: 1.75rem;">
+        <h2 style="font-size: 0.9rem; font-weight: 700; margin: 0 0 1rem; letter-spacing: -0.01em;">Tips para una meta efectiva</h2>
+        <div class="row g-3" style="font-size: 0.875rem; color: var(--color-text-muted);">
+            <div class="col-md-6">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <i class="fas fa-check" style="color: var(--color-success); margin-top: 0.25rem; font-size: 0.75rem;"></i>
+                    <div><strong style="color: var(--color-text);">Sé específico</strong> — definí claramente qué querés lograr.</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <i class="fas fa-check" style="color: var(--color-success); margin-top: 0.25rem; font-size: 0.75rem;"></i>
+                    <div><strong style="color: var(--color-text);">Plazos realistas</strong> — dale tiempo suficiente.</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <i class="fas fa-check" style="color: var(--color-success); margin-top: 0.25rem; font-size: 0.75rem;"></i>
+                    <div><strong style="color: var(--color-text);">Monto alcanzable</strong> — considerá tus ingresos y gastos actuales.</div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <i class="fas fa-check" style="color: var(--color-success); margin-top: 0.25rem; font-size: 0.75rem;"></i>
+                    <div><strong style="color: var(--color-text);">Motivate</strong> — elegí un ícono y color que te inspiren.</div>
                 </div>
             </div>
         </div>

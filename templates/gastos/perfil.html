@@ -1,336 +1,139 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-{% block title %}Mi Perfil - Control de Gastos{% endblock %}
+{% block title %}Mi perfil · Gastitos{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient text-white text-center py-4">
-                    <h3 class="mb-0"><i class="fas fa-user-circle me-2"></i>Mi Perfil</h3>
-                    <p class="mb-0 opacity-75">Actualiza tu información personal</p>
+<div class="container" style="padding: 3rem 0; max-width: 880px;">
+
+    {# === Card principal: foto + form === #}
+    <div class="card mb-4" style="padding: 2.5rem;">
+        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Mi cuenta</span>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 1.75rem;">Perfil</h1>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {# Foto de perfil con edicion inline #}
+            <div class="d-flex align-items-center gap-3 mb-4 pb-4" style="border-bottom: 1px solid var(--color-border-soft);">
+                <div onclick="document.getElementById('{{ form.foto.id_for_label }}').click();" style="cursor: pointer; position: relative;">
+                    {% if perfil.foto %}
+                        <img src="{{ perfil.foto.url }}" alt="Foto de perfil" class="profile-photo" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 1px solid var(--color-border);">
+                    {% else %}
+                        <div style="width: 84px; height: 84px; border-radius: 50%; background: var(--color-primary-soft); color: var(--color-primary-hover); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-primary-soft-strong);">
+                            <i class="fas fa-user fa-2x"></i>
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="card-body p-5">
-                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        
-                        <!-- Foto de perfil -->
-                        <div class="row mb-5">
-                            <div class="col-md-12 text-center">
-                                <div class="profile-photo-container position-relative d-inline-block" style="cursor: pointer;" onclick="document.getElementById('{{ form.foto.id_for_label }}').click();">
-                                    {% if perfil.foto %}
-                                        <img src="{{ perfil.foto.url }}" alt="Foto de perfil" class="rounded-circle shadow-lg profile-photo" style="width: 180px; height: 180px; object-fit: cover; border: 5px solid #fff; transition: all 0.3s ease;" onmouseover="this.style.filter='brightness(0.7)'" onmouseout="this.style.filter='brightness(1)'">
-                                    {% else %}
-                                        <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center shadow-lg" style="width: 180px; height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: 5px solid #fff; transition: all 0.3s ease;" onmouseover="this.style.filter='brightness(0.8)'" onmouseout="this.style.filter='brightness(1)'">
-                                            <i class="fas fa-user fa-5x"></i>
-                                        </div>
-                                    {% endif %}
-                                    <div class="position-absolute bottom-0 end-0">
-                                        <span class="badge bg-primary rounded-pill p-3 shadow" style="transition: all 0.3s ease;">
-                                            <i class="fas fa-camera fa-lg"></i>
-                                        </span>
-                                    </div>
-                                    <!-- Overlay para hover -->
-                                    <div class="position-absolute top-0 start-0 w-100 h-100 rounded-circle d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s ease;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
-                                        <div class="text-white text-center">
-                                            <i class="fas fa-camera fa-2x mb-2"></i>
-                                            <div class="fw-bold">Cambiar Foto</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Input oculto -->
-                                <input type="file" id="{{ form.foto.id_for_label }}" name="{{ form.foto.name }}" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                                
-                                <!-- Instrucciones -->
-                                <div class="mt-3">
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>Haz clic en la foto para cambiarla
-                                    </div>
-                                </div>
-                                
-                                {% if form.foto.errors %}
-                                    <div class="invalid-feedback d-block mt-2">
-                                        {{ form.foto.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Script para preview de imagen -->
-                        <script>
-                        function previewImage(input) {
-                            if (input.files && input.files[0]) {
-                                var reader = new FileReader();
-                                reader.onload = function(e) {
-                                    var img = document.querySelector('.profile-photo');
-                                    if (img) {
-                                        img.src = e.target.result;
-                                    } else {
-                                        // Si no hay imagen, crear una nueva
-                                        var container = document.querySelector('.profile-photo-container');
-                                        var placeholder = container.querySelector('div.rounded-circle');
-                                        if (placeholder) {
-                                            placeholder.innerHTML = '<img src="' + e.target.result + '" alt="Foto de perfil" class="rounded-circle shadow-lg profile-photo" style="width: 180px; height: 180px; object-fit: cover; border: 5px solid #fff; transition: all 0.3s ease;" onmouseover="this.style.filter=\'brightness(0.7)\'" onmouseout="this.style.filter=\'brightness(1)\'">';
-                                        }
-                                    }
-                                }
-                                reader.readAsDataURL(input.files[0]);
-                            }
-                        }
-                        </script>
-                        
-                        <!-- Información personal -->
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.first_name.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-user me-2 text-primary"></i>Nombre
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    {{ form.first_name|add_class:"form-control" }}
-                                    <span class="input-group-text">
-                                        <i class="fas fa-user text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.first_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.first_name.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.last_name.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-user me-2 text-primary"></i>Apellido
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    {{ form.last_name|add_class:"form-control" }}
-                                    <span class="input-group-text">
-                                        <i class="fas fa-user text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.last_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.last_name.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Contacto -->
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-envelope me-2 text-primary"></i>Email
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    {{ form.email|add_class:"form-control" }}
-                                    <span class="input-group-text">
-                                        <i class="fas fa-envelope text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.email.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.email.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.telefono.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-phone me-2 text-primary"></i>Teléfono
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    {{ form.telefono|add_class:"form-control" }}
-                                    <span class="input-group-text">
-                                        <i class="fas fa-phone text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.telefono.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.telefono.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Información adicional -->
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.fecha_nacimiento.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-calendar me-2 text-primary"></i>Fecha de Nacimiento
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    {{ form.fecha_nacimiento|add_class:"form-control" }}
-                                    <span class="input-group-text">
-                                        <i class="fas fa-calendar text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.fecha_nacimiento.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.fecha_nacimiento.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.profesion.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-briefcase me-2 text-primary"></i>Profesión
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    {{ form.profesion|add_class:"form-control" }}
-                                    <span class="input-group-text">
-                                        <i class="fas fa-briefcase text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.profesion.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.profesion.errors.0 }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <!-- Información financiera -->
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body">
-                                        <h5 class="card-title text-primary mb-3">
-                                            <i class="fas fa-dollar-sign me-2"></i>Información Financiera
-                                        </h5>
-                                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="bg-white rounded-3 p-3 shadow-sm border">
-                                    <h6 class="text-muted mb-2">
-                                        <i class="fas fa-wallet me-2 text-success"></i>Salario Mensual Actual
-                                    </h6>
-                                    <h4 class="text-success mb-2">
-                                        <i class="fas fa-dollar-sign me-1"></i>
-                                        {% if perfil.salario_mensual > 0 %}
-                                            ${{ perfil.salario_mensual|floatformat:0 }}
-                                        {% else %}
-                                            <span class="text-muted">No configurado</span>
-                                        {% endif %}
-                                        <a href="{% url 'actualizar_salario' %}" class="text-muted ms-2" title="Actualizar Salario">
-                                            <i class="fas fa-edit fa-sm"></i>
-                                        </a>
-                                    </h4>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle me-1"></i>Se actualiza automáticamente cada mes
-                                    </div>
-                                </div>
-                            </div>
-                                            <div class="col-md-6">
-                                <div class="bg-white rounded-3 p-3 shadow-sm border">
-                                    <h6 class="text-muted mb-2">
-                                        <i class="fas fa-chart-line me-2 text-info"></i>Resumen del Mes
-                                    </h6>
-                                    <div class="row text-center">
-                                        <div class="col-6">
-                                            <div class="border-end">
-                                                <h6 class="text-muted mb-1">Gastado</h6>
-                                                <h5 class="text-danger mb-0">
-                                                    <i class="fas fa-minus-circle me-1"></i>
-                                                    ${{ total_gastos_mes|floatformat:0 }}
-                                                </h5>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <h6 class="text-muted mb-1">Disponible</h6>
-                                            <h5 class="text-success mb-0">
-                                                <i class="fas fa-piggy-bank me-1"></i>
-                                                ${{ saldo_disponible|floatformat:0 }}
-                                            </h5>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2 text-center">
-                                        <small class="text-muted">
-                                            <i class="fas fa-sync-alt me-1"></i>Se actualiza automáticamente
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Botones de acción -->
-                        <div class="text-center pt-3">
-                            <button type="submit" class="btn btn-primary btn-lg px-5 py-3 me-3">
-                                <i class="fas fa-save me-2"></i>Guardar Cambios
-                            </button>
-                            <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg px-5 py-3">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </a>
-                        </div>
-                    </form>
+                <div>
+                    <div style="font-weight: 600;">{{ user.first_name|default:user.username }}</div>
+                    <div style="font-size: 0.875rem; color: var(--color-text-soft);">
+                        Click en la foto para cambiarla
+                    </div>
+                    <input type="file" id="{{ form.foto.id_for_label }}" name="{{ form.foto.name }}" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                    {% if form.foto.errors %}
+                        <div class="text-danger small mt-1">{{ form.foto.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Datos personales #}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">Nombre</label>
+                    {{ form.first_name|add_class:"form-control" }}
+                    {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Apellido</label>
+                    {{ form.last_name|add_class:"form-control" }}
+                    {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                    {{ form.email|add_class:"form-control" }}
+                    {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
+                    {{ form.telefono|add_class:"form-control" }}
+                    {% if form.telefono.errors %}<div class="text-danger small mt-1">{{ form.telefono.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label for="{{ form.fecha_nacimiento.id_for_label }}" class="form-label">Fecha de nacimiento</label>
+                    {{ form.fecha_nacimiento|add_class:"form-control" }}
+                    {% if form.fecha_nacimiento.errors %}<div class="text-danger small mt-1">{{ form.fecha_nacimiento.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.profesion.id_for_label }}" class="form-label">Profesión</label>
+                    {{ form.profesion|add_class:"form-control" }}
+                    {% if form.profesion.errors %}<div class="text-danger small mt-1">{{ form.profesion.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'index' %}" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+
+    {# === Card de finanzas === #}
+    <div class="card" style="padding: 2rem;">
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin: 0 0 1.5rem;">Información financiera</h2>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div style="padding: 1.25rem; background: var(--color-border-soft); border-radius: var(--radius-lg);">
+                    <div style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.5rem;">Salario mensual</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;">
+                        {% if perfil.salario_mensual > 0 %}
+                            ${{ perfil.salario_mensual|floatformat:0 }}
+                        {% else %}
+                            <span style="color: var(--color-text-soft); font-weight: 400;">No configurado</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'actualizar_salario' %}" style="font-size: 0.8125rem; color: var(--color-primary); font-weight: 600; text-decoration: none;">Actualizar →</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="padding: 1.25rem; background: var(--color-border-soft); border-radius: var(--radius-lg);">
+                    <div style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.5rem;">Gastado este mes</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--color-danger);">
+                        ${{ total_gastos_mes|floatformat:0 }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="padding: 1.25rem; background: var(--color-primary-soft); border: 1px solid var(--color-primary-soft-strong); border-radius: var(--radius-lg);">
+                    <div style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-primary-hover); opacity: 0.75; margin-bottom: 0.5rem;">Disponible</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--color-primary-hover);">
+                        ${{ saldo_disponible|floatformat:0 }}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.bg-gradient {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.querySelector('.profile-photo');
+            if (img) {
+                img.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
 }
-
-.profile-photo {
-    transition: transform 0.3s ease;
-}
-
-.profile-photo:hover {
-    transform: scale(1.05);
-}
-
-.input-group-lg .form-control {
-    border-radius: 0.5rem 0 0 0.5rem;
-    border: 2px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.input-group-lg .input-group-text {
-    border-radius: 0 0.5rem 0.5rem 0;
-    border: 2px solid #e9ecef;
-    border-left: none;
-    background: #f8f9fa;
-}
-
-.input-group-lg .form-control:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-.input-group-lg .form-control:focus + .input-group-text {
-    border-color: #667eea;
-}
-
-.card {
-    border-radius: 1rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-secondary {
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-outline-secondary:hover {
-    transform: translateY(-2px);
-}
-</style>
+</script>
 {% endblock %}

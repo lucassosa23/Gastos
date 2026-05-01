@@ -1,381 +1,124 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-
-{% block title %}Configurar Salario - Control de Gastos{% endblock %}
+{% block title %}Configurar salario · Gastitos{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Mensajes de feedback -->
+<div class="container" style="padding: 3rem 0; max-width: 720px;">
+
     {% if messages %}
-        <div class="row mb-3">
-            <div class="col-12">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        </div>
+        {% endfor %}
     {% endif %}
-    
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-gradient text-white text-center py-4">
-                    <h3 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Configurar Salario Mensual</h3>
-                    <p class="mb-0 opacity-75">Establece tu salario para gestionar mejor tus gastos</p>
-                </div>
-                <div class="card-body p-5">
-                    <form method="post" class="needs-validation" novalidate>
-                        {% csrf_token %}
-                        
-                        <!-- Información actual -->
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="alert alert-info border-0 rounded-3">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-info-circle fa-2x me-3 text-primary"></i>
-                                        <div>
-                                            <h6 class="alert-heading mb-1">Salario Actual</h6>
-                                            <p class="mb-0">
-                                                {% if perfil.salario_mensual > 0 %}
-                                                    <strong class="text-success">${{ perfil.salario_mensual|floatformat:0 }}</strong>
-                                                {% else %}
-                                                    <span class="text-muted">No configurado</span>
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Campo de salario -->
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <label for="{{ form.salario_mensual.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-wallet me-2 text-success"></i>Nuevo Salario Mensual
-                                </label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text bg-success text-white">
-                                        <i class="fas fa-dollar-sign"></i>
-                                    </span>
-                                    {{ form.salario_mensual|add_class:"form-control form-control-lg" }}
-                                    <span class="input-group-text bg-light">
-                                        <i class="fas fa-calendar-alt text-muted"></i>
-                                    </span>
-                                </div>
-                                {% if form.salario_mensual.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.salario_mensual.errors.0 }}
-                                    </div>
-                                {% endif %}
-                                <div class="form-text mt-2">
-                                    <i class="fas fa-lightbulb me-1 text-warning"></i>
-                                    Este valor se usará para calcular tu saldo disponible después de los gastos
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Información adicional -->
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="card bg-light border-0">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-primary mb-3">
-                                            <i class="fas fa-chart-line me-2"></i>¿Cómo funciona?
-                                        </h6>
-                                        <ul class="list-unstyled mb-0">
-                                            <li class="mb-2">
-                                                <i class="fas fa-check-circle text-success me-2"></i>
-                                                Tu salario se usa como base para calcular el saldo disponible
-                                            </li>
 
-                                            <li class="mb-0">
-                                                <i class="fas fa-check-circle text-success me-2"></i>
-                                                Puedes ver el resumen en el dashboard
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Botones de acción -->
-                        <div class="text-center pt-3">
-                            <button type="submit" name="salario_submit" class="btn btn-success btn-lg px-5 py-3 me-3">
-                                <i class="fas fa-save me-2"></i>Guardar Salario
-                            </button>
-                            <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-lg px-5 py-3">
-                                <i class="fas fa-arrow-left me-2"></i>Volver
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Sección de Gastos (solo si el salario está configurado) -->
-            {% if salario_configurado %}
-            <div class="card shadow-lg border-0 mt-4">
-                <div class="card-header bg-gradient-expense text-center py-3">
-                    <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Agregar Gasto</h4>
-                    <p class="mb-0 opacity-75">Saldo disponible: <strong>${{ perfil.saldo_disponible|floatformat:0 }}</strong></p>
-                </div>
-                <div class="card-body p-4">
-                    <form method="post" class="gasto-form">
-                        {% csrf_token %}
-                        
-                        <div class="row g-3">
-                            <!-- Descripción -->
-                            <div class="col-md-8">
-                                <label for="{{ gasto_form.descripcion.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-tag me-2 text-primary"></i>Descripción
-                                </label>
-                                {{ gasto_form.descripcion|add_class:"form-control" }}
-                            </div>
-                            
-                            <!-- Monto -->
-                            <div class="col-md-4">
-                                <label for="{{ gasto_form.monto.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-dollar-sign me-2 text-success"></i>Monto
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    {{ gasto_form.monto|add_class:"form-control" }}
-                                </div>
-                            </div>
-                            
+    {# === Configuración de salario === #}
+    <div class="card mb-4" style="padding: 2rem;">
+        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Perfil financiero</span>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0.5rem;">Configurar salario mensual</h1>
+        <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">
+            Tu salario se usa como base para calcular el saldo disponible cada mes.
+        </p>
 
-                        </div>
-                        
-                        <!-- Botón agregar -->
-                        <div class="text-center mt-4">
-                            <button type="submit" name="gasto_submit" class="btn btn-primary btn-lg px-4">
-                                <i class="fas fa-plus me-2"></i>Agregar Gasto
-                            </button>
-                        </div>
-                    </form>
+        <div class="mini-salario mb-4">
+            Salario actual:
+            {% if perfil.salario_mensual > 0 %}
+                <strong>${{ perfil.salario_mensual|floatformat:0 }}</strong>
+            {% else %}
+                <span style="opacity: 0.7;">no configurado</span>
+            {% endif %}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.salario_mensual.id_for_label }}" class="form-label">Nuevo salario mensual</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.salario_mensual|add_class:"form-control" }}
                 </div>
+                {% if form.salario_mensual.errors %}
+                    <div class="text-danger small mt-1">{{ form.salario_mensual.errors.0 }}</div>
+                {% endif %}
             </div>
-            
-            <!-- Gastos Recientes -->
-            {% if gastos_recientes %}
-            <div class="card shadow-lg border-0 mt-4">
-                <div class="card-header bg-light text-center py-3">
-                    <h5 class="mb-0 text-dark"><i class="fas fa-history me-2"></i>Gastos Recientes</h5>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'index' %}" class="btn btn-light">Volver</a>
+                <button type="submit" name="salario_submit" class="btn btn-primary">Guardar salario</button>
+            </div>
+        </form>
+    </div>
+
+    {# === Agregar gasto rápido (solo si hay salario configurado) === #}
+    {% if salario_configurado %}
+    <div class="card mb-4" style="padding: 2rem;">
+        <div class="d-flex justify-content-between align-items-baseline mb-1">
+            <h2 style="font-size: 1.125rem; font-weight: 700; margin: 0;">Agregar gasto rápido</h2>
+            <span style="font-size: 0.875rem; color: var(--color-text-soft);">
+                Saldo disponible: <strong style="color: var(--color-text);">${{ perfil.saldo_disponible|floatformat:0 }}</strong>
+            </span>
+        </div>
+        <p style="color: var(--color-text-soft); font-size: 0.875rem; margin-bottom: 1.5rem;">
+            Atajo para registrar un gasto sin pasar por la home.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label for="{{ gasto_form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+                    {{ gasto_form.descripcion|add_class:"form-control" }}
                 </div>
-                <div class="card-body p-3">
-                    <div class="row g-3">
-                        {% for gasto in gastos_recientes %}
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="flex-grow-1">
-                                            <h6 class="card-title mb-1">{{ gasto.descripcion }}</h6>
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar-alt me-1"></i>
-                                                {{ gasto.fecha|date:"d/m/Y H:i" }}
-                                            </small>
-                                        </div>
-                                        <span class="badge bg-danger fs-5 px-3 py-2">-${{ gasto.monto|floatformat:0 }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
+                <div class="col-md-4">
+                    <label for="{{ gasto_form.monto.id_for_label }}" class="form-label">Monto</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        {{ gasto_form.monto|add_class:"form-control" }}
                     </div>
                 </div>
             </div>
-            {% endif %}
-            {% endif %}
+
+            <div class="d-flex justify-content-end">
+                <button type="submit" name="gasto_submit" class="btn btn-primary">Agregar gasto</button>
+            </div>
+        </form>
+    </div>
+
+    {# === Gastos recientes === #}
+    {% if gastos_recientes %}
+    <div class="card" style="padding: 2rem;">
+        <h2 style="font-size: 1.125rem; font-weight: 700; margin: 0 0 1.25rem;">Gastos recientes</h2>
+        <div style="display: grid; gap: 0.5rem;">
+            {% for gasto in gastos_recientes %}
+                <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0.75rem 0; border-bottom: 1px solid var(--color-border-soft);">
+                    <div>
+                        <div style="font-weight: 500;">{{ gasto.descripcion }}</div>
+                        <div style="font-size: 0.8125rem; color: var(--color-text-soft); margin-top: 0.125rem;">
+                            {{ gasto.fecha|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    <strong style="color: var(--color-danger);">−${{ gasto.monto|floatformat:0 }}</strong>
+                </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
+    {% endif %}
 </div>
-
-<style>
-.bg-gradient {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-}
-
-.bg-gradient-expense {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    color: white !important;
-}
-
-.input-group-lg .form-control {
-    border-radius: 0 0.5rem 0.5rem 0;
-    border: 2px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.input-group-lg .input-group-text {
-    border: 2px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.input-group-lg .form-control:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-.input-group-lg .form-control:focus ~ .input-group-text {
-    border-color: #28a745;
-}
-
-.card {
-    border-radius: 1rem;
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    border: none;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-success:hover {
-    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-}
-
-.btn-outline-secondary {
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-outline-secondary:hover {
-    transform: translateY(-2px);
-}
-
-/* Estilos para el formulario de gastos */
-.gasto-form .form-control {
-    border-radius: 0.5rem;
-    border: 2px solid #e9ecef;
-    transition: all 0.3s ease;
-}
-
-.gasto-form .form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.gasto-form .input-group-text {
-    background: #007bff;
-    color: white;
-    border: 2px solid #007bff;
-    border-radius: 0.5rem 0 0 0.5rem;
-}
-
-.btn-primary {
-    background-color: #007bff;
-    border: none;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-}
-
-/* Animación para nuevos gastos */
-.table-hover tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
-}
-
-/* Indicador de saldo */
-.saldo-indicator {
-    font-size: 1.1em;
-    font-weight: bold;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-/* Responsive improvements */
-@media (max-width: 768px) {
-    .col-md-6, .col-md-3 {
-        margin-bottom: 1rem;
-    }
-    
-    .btn-lg {
-        padding: 0.75rem 2rem;
-        font-size: 1rem;
-    }
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const montoInput = document.querySelector('#id_monto');
-    const saldoDisplay = document.querySelector('.saldo-indicator');
-    const submitBtn = document.querySelector('button[name="gasto_submit"]');
-    const saldoDisponible = {{ perfil.saldo_disponible|default:0 }};
-    
-    if (montoInput) {
-        montoInput.addEventListener('input', function() {
-            const monto = parseFloat(this.value) || 0;
-            const nuevoSaldo = saldoDisponible - monto;
-            
-            // Actualizar color del botón según el saldo
-            if (monto > saldoDisponible) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Saldo Insuficiente';
-                submitBtn.className = 'btn btn-danger btn-lg px-4';
-                this.style.borderColor = '#dc3545';
-            } else {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Agregar Gasto';
-                submitBtn.className = 'btn btn-primary btn-lg px-4';
-                this.style.borderColor = monto > 0 ? '#28a745' : '#e9ecef';
-            }
-            
-            // Mostrar preview del nuevo saldo
-            if (monto > 0) {
-                const preview = document.querySelector('.saldo-preview');
-                if (preview) {
-                    preview.remove();
-                }
-                
-                const previewElement = document.createElement('small');
-                previewElement.className = 'saldo-preview text-muted d-block mt-1';
-                previewElement.innerHTML = `Saldo después del gasto: <strong class="${nuevoSaldo >= 0 ? 'text-success' : 'text-danger'}">$${nuevoSaldo.toFixed(2)}</strong>`;
-                this.parentElement.appendChild(previewElement);
-            } else {
-                const preview = document.querySelector('.saldo-preview');
-                if (preview) {
-                    preview.remove();
-                }
-            }
-        });
-    }
-    
-    // Animación para mensajes de éxito/error
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateY(-20px)';
-            setTimeout(() => alert.remove(), 300);
+    // Auto-dismiss alerts después de 5s
+    document.querySelectorAll('.alert').forEach(function(a) {
+        setTimeout(function() {
+            a.style.transition = 'opacity 0.3s';
+            a.style.opacity = '0';
+            setTimeout(function() { a.remove(); }, 300);
         }, 5000);
     });
-    
-    // Auto-focus en el primer campo del formulario de gastos
-    const descripcionInput = document.querySelector('#id_descripcion');
-    if (descripcionInput && {{ salario_configurado|yesno:"true,false" }}) {
-        setTimeout(() => descripcionInput.focus(), 500);
-    }
 });
 </script>
-
 {% endblock %}
