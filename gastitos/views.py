@@ -1018,7 +1018,7 @@ def dashboard(request):
         'totales_data': json.dumps(totales_data),
         'saldos_data': json.dumps(saldos_data),
         'gastos_recientes': gastos_mes_actual.order_by('-fecha')[:10],
-        'gastos_json': json.dumps(gastos_calendario),
+        'gastos_json': gastos_calendario,
         'historial_simple': historial_simple,
         'promedio_mensual': promedio_mensual,
         'mes_mayor_gasto': mes_mayor_gasto['mes'],

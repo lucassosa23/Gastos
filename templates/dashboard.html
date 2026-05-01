@@ -519,11 +519,12 @@
 }
 </style>
 
+{{ gastos_json|json_script:"gastos-data" }}
 <script>
 // Variables del calendario
 let currentDate = new Date();
 let selectedDate = null;
-const gastosData_calendar = {{ gastos_json|safe }};
+const gastosData_calendar = JSON.parse(document.getElementById('gastos-data').textContent);
 const salarioMensual = {{ perfil.salario_mensual|default:0 }};
 
 // Función para generar el calendario
