@@ -1094,15 +1094,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    // Función para mostrar alertas
+    // Función para mostrar alertas.
+    // Recibe `mensaje` que puede provenir de respuestas del server
+    // (data.error) — se inyecta como text node, nunca como HTML.
     function mostrarAlerta(mensaje, tipo) {
         const alertContainer = document.querySelector('.container-fluid');
         const alert = document.createElement('div');
         alert.className = `alert alert-${tipo} alert-dismissible fade show mt-3`;
-        alert.innerHTML = `
-            ${mensaje}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+
+        alert.appendChild(document.createTextNode(mensaje));
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'btn-close';
+        closeBtn.setAttribute('data-bs-dismiss', 'alert');
+        alert.appendChild(closeBtn);
+
         alertContainer.insertBefore(alert, alertContainer.firstChild);
         
         // Auto-dismiss después de 3 segundos
