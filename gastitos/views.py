@@ -1023,8 +1023,11 @@ def dashboard(request):
     
     total_gastos_periodo = Decimal('0')
     mes_mayor_gasto = {'mes': '', 'total': Decimal('0')}
-    mes_menor_gasto = {'mes': '', 'total': float('inf')}
-    
+    # None como centinela "no se encontro ningun mes con gasto > 0".
+    # Antes era float('inf'), que mezclaba un float en una estructura
+    # cuyo 'total' final es Decimal cuando hay datos reales.
+    mes_menor_gasto = {'mes': '', 'total': None}
+
     for item in ultimos_6_meses:
         # total_gastos como Decimal end-to-end: el modelo guarda Decimal,
         # los calculos de saldo deben preservar precision sin pasar por
@@ -1042,7 +1045,10 @@ def dashboard(request):
         # Encontrar mes con mayor y menor gasto
         if total_gastos > mes_mayor_gasto['total']:
             mes_mayor_gasto = {'mes': mes_nombre, 'total': total_gastos}
-        if total_gastos < mes_menor_gasto['total'] and total_gastos > 0:
+        if total_gastos > 0 and (
+            mes_menor_gasto['total'] is None
+            or total_gastos < mes_menor_gasto['total']
+        ):
             mes_menor_gasto = {'mes': mes_nombre, 'total': total_gastos}
 
         historial_simple.append({
@@ -1058,9 +1064,9 @@ def dashboard(request):
         if ultimos_6_meses else Decimal('0')
     )
     
-    # Si no hay datos suficientes, ajustar valores por defecto
-    if mes_menor_gasto['total'] == float('inf'):
-        mes_menor_gasto = {'mes': 'N/A', 'total': 0}
+    # Si ningun mes tuvo gastos > 0, mostrar valor por defecto
+    if mes_menor_gasto['total'] is None:
+        mes_menor_gasto = {'mes': 'N/A', 'total': Decimal('0')}
     
     context = {
         'gastos_mensuales': gastos_por_mes,
