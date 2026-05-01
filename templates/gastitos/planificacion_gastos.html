@@ -1,179 +1,150 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Planificación de Gastos - {{ nombre_mes }} {{ año_siguiente }}{% endblock %}
+{% block title %}Planificación · {{ nombre_mes }} {{ año_siguiente }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2 class="mb-3">Planificación de Gastos - {{ nombre_mes }} {{ año_siguiente }}</h2>
-            <p class="lead">Planifica tus gastos para el próximo mes y mantén un mejor control de tus finanzas.</p>
+<div class="container" style="padding: 3rem 0;">
+
+    {# === Header === #}
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Planificación mensual</span>
+            <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0.5rem 0 0.25rem;">{{ nombre_mes }} {{ año_siguiente }}</h1>
+            <p style="color: var(--color-text-soft); margin: 0;">
+                Planificá tus gastos del próximo mes y mantené el control de tus finanzas.
+            </p>
         </div>
+        <a href="{% url 'agregar_gasto_planificado' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Agregar gasto
+        </a>
     </div>
 
-    <div class="row mb-4">
+    {# === 3 stat cards: saldo / total planificado / restante === #}
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Ingresa tu Saldo Disponible</h5>
-                </div>
-                <div class="card-body">
-                    <form id="saldoForm" method="post" class="d-flex align-items-center">
-                        {% csrf_token %}
-                        <div class="input-group mb-2">
+            <div class="card" style="padding: 1.5rem;">
+                <div style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.75rem;">Saldo disponible</div>
+                <form id="saldoForm" method="post">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <div class="input-group input-group-sm">
                             <span class="input-group-text">$</span>
-                            <input type="number" id="saldo_personalizado" name="saldo_personalizado" class="form-control" value="{{ saldo_personalizado|default:0 }}" step="0.01" min="0">
+                            <input type="number" name="saldo_personalizado" class="form-control" value="{{ saldo_personalizado|default:0 }}" step="0.01" min="0">
                         </div>
-                        <div class="input-group mb-2">
-                            <span class="input-group-text">+ Sobrante $</span>
-                            <input type="number" id="monto_sobrante" name="monto_sobrante" class="form-control" value="{{ monto_sobrante|default:0 }}" step="0.01" min="0">
+                    </div>
+                    <div class="mb-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">+ sobrante</span>
+                            <input type="number" name="monto_sobrante" class="form-control" value="{{ monto_sobrante|default:0 }}" step="0.01" min="0">
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Actualizar</button>
-                    </form>
-                </div>
+                    </div>
+                    <button type="submit" class="btn btn-light btn-sm w-100">Actualizar</button>
+                </form>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">Total Gastos Planificados</h5>
-                </div>
-                <div class="card-body">
-                    <h3>${{ total_planificado|floatformat:2 }}</h3>
-                    <small class="text-muted">Total de gastos que planeas realizar</small>
-                </div>
+            <div class="card stat-card">
+                <div class="stat-label">Total planificado</div>
+                <h4 class="stat-amount">${{ total_planificado|floatformat:0 }}</h4>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card {% if saldo_estimado < 0 %}border-danger{% else %}border-success{% endif %}">
-                <div class="card-header {% if saldo_estimado < 0 %}bg-danger{% else %}bg-success{% endif %} text-white">
-                    <h5 class="mb-0">Saldo Restante</h5>
-                </div>
-                <div class="card-body">
-                    <h3>${{ saldo_estimado|floatformat:2 }}</h3>
-                    <small class="text-muted">Lo que te quedará después de los gastos</small>
-                </div>
+            <div class="card stat-card {% if saldo_estimado < 0 %}is-negative{% else %}is-accent{% endif %}">
+                <div class="stat-label">Saldo restante</div>
+                <h4 class="stat-amount">${{ saldo_estimado|floatformat:0 }}</h4>
             </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Gastos Planificados</h5>
-                    <a href="{% url 'agregar_gasto_planificado' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Agregar Gasto
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if gastos_planificados %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Descripción</th>
-                                        <th>Monto</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for gasto in gastos_planificados %}
-                                    <tr>
-                                        <td>{{ gasto.descripcion }}</td>
-                                        <td>${{ gasto.monto|floatformat:2 }}</td>
-                                        <td>
-                                            {% if gasto.completado %}
-                                                <span class="badge bg-success">Completado</span>
-                                            {% else %}
-                                                <span class="badge bg-warning">Pendiente</span>
+    <style>
+        .stat-card { padding: 1.5rem; }
+        .stat-card .stat-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.5rem; }
+        .stat-card .stat-amount { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+        .stat-card.is-negative .stat-amount { color: var(--color-danger); }
+        .stat-card.is-accent { background: var(--color-primary-soft); border-color: var(--color-primary-soft-strong); }
+        .stat-card.is-accent .stat-label { color: var(--color-primary-hover); opacity: 0.75; }
+        .stat-card.is-accent .stat-amount { color: var(--color-primary-hover); }
+    </style>
+
+    {# === Lista de gastos planificados === #}
+    <div class="card mb-4">
+        <div class="card-header">Gastos planificados</div>
+        <div class="card-body p-0">
+            {% if gastos_planificados %}
+                <div class="table-responsive">
+                    <table class="table mb-0" style="font-size: 0.9rem;">
+                        <thead style="background: var(--color-border-soft);">
+                            <tr>
+                                <th style="border: none; padding: 0.75rem 1.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft);">Descripción</th>
+                                <th style="border: none; padding: 0.75rem 1rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft);">Monto</th>
+                                <th style="border: none; padding: 0.75rem 1rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft);">Estado</th>
+                                <th style="border: none; padding: 0.75rem 1rem;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gasto in gastos_planificados %}
+                                <tr>
+                                    <td style="padding: 0.875rem 1.5rem; border-color: var(--color-border-soft);">{{ gasto.descripcion }}</td>
+                                    <td style="padding: 0.875rem 1rem; border-color: var(--color-border-soft); font-weight: 600;">${{ gasto.monto|floatformat:0 }}</td>
+                                    <td style="padding: 0.875rem 1rem; border-color: var(--color-border-soft);">
+                                        {% if gasto.completado %}
+                                            <span style="display: inline-block; padding: 0.2rem 0.6rem; background: #dcfce7; color: #166534; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">Completado</span>
+                                        {% else %}
+                                            <span style="display: inline-block; padding: 0.2rem 0.6rem; background: var(--color-primary-soft); color: var(--color-primary-hover); border-radius: 999px; font-size: 0.75rem; font-weight: 600;">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 0.875rem 1rem; border-color: var(--color-border-soft); text-align: right;">
+                                        <div class="btn-group btn-group-sm">
+                                            {% if not gasto.completado %}
+                                                <a href="{% url 'aplicar_gasto_planificado' gasto.id %}" class="btn btn-light" title="Aplicar como gasto real"><i class="fas fa-check"></i></a>
+                                                <a href="{% url 'editar_gasto_planificado' gasto.id %}" class="btn btn-light" title="Editar"><i class="fas fa-edit"></i></a>
                                             {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                {% if not gasto.completado %}
-                                                <a href="{% url 'aplicar_gasto_planificado' gasto.id %}" class="btn btn-sm btn-success" title="Aplicar como gasto real">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                                <a href="{% url 'editar_gasto_planificado' gasto.id %}" class="btn btn-sm btn-primary" title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                {% endif %}
-                                                <a href="{% url 'eliminar_gasto_planificado' gasto.id %}" class="btn btn-sm btn-danger" title="Eliminar">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            No tienes gastos planificados para {{ nombre_mes }} {{ año_siguiente }}.
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {% if gastos_fijos %}
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Sugerencias basadas en tus Gastos Fijos</h5>
-                </div>
-                <div class="card-body">
-                    <p>Estos son tus gastos fijos actuales que podrías incluir en tu planificación:</p>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Descripción</th>
-                                    <th>Monto</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for gasto_fijo in gastos_fijos %}
-                                <tr>
-                                    <td>{{ gasto_fijo.descripcion }}</td>
-                                    <td>${{ gasto_fijo.monto|floatformat:2 }}</td>
-                                    <td>
-                                        <form method="post" action="{% url 'agregar_gasto_planificado' %}" class="d-inline">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="descripcion" value="{{ gasto_fijo.descripcion }}">
-                                            <input type="hidden" name="monto" value="{{ gasto_fijo.monto }}">
-                                            <input type="hidden" name="mes" value="{{ mes_siguiente }}">
-                                            <input type="hidden" name="anio" value="{{ año_siguiente }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-plus-circle"></i> Agregar a planificación
-                                            </button>
-                                        </form>
+                                            <a href="{% url 'eliminar_gasto_planificado' gasto.id %}" class="btn btn-light" title="Eliminar" style="color: var(--color-danger);"><i class="fas fa-trash"></i></a>
+                                        </div>
                                     </td>
                                 </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div style="padding: 3rem; text-align: center; color: var(--color-text-soft);">
+                    No tenés gastos planificados para {{ nombre_mes }} {{ año_siguiente }}.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# === Sugerencias de gastos fijos === #}
+    {% if gastos_fijos %}
+        <div class="card">
+            <div class="card-header">Sugerencias basadas en tus gastos fijos</div>
+            <div class="card-body">
+                <p style="color: var(--color-text-soft); font-size: 0.875rem; margin-bottom: 1rem;">
+                    Agregá rápidamente tus gastos fijos a la planificación.
+                </p>
+                <div style="display: grid; gap: 0.5rem;">
+                    {% for gasto_fijo in gastos_fijos %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: var(--color-border-soft); border-radius: var(--radius-md);">
+                            <div>
+                                <div style="font-weight: 500;">{{ gasto_fijo.descripcion }}</div>
+                                <div style="font-size: 0.825rem; color: var(--color-text-soft);">${{ gasto_fijo.monto|floatformat:0 }}</div>
+                            </div>
+                            <form method="post" action="{% url 'agregar_gasto_planificado' %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="descripcion" value="{{ gasto_fijo.descripcion }}">
+                                <input type="hidden" name="monto" value="{{ gasto_fijo.monto }}">
+                                <input type="hidden" name="mes" value="{{ mes_siguiente }}">
+                                <input type="hidden" name="anio" value="{{ año_siguiente }}">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-plus me-1"></i>Agregar
+                                </button>
+                            </form>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-    </div>
     {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    $(document).ready(function() {
-        // Inicializar tooltips
-        $('[data-toggle="tooltip"]').tooltip();
-    });
-</script>
 {% endblock %}

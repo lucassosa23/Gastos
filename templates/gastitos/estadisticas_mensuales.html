@@ -1,27 +1,35 @@
 {% extends 'base.html' %}
 
+{% block title %}Estadísticas mensuales · Gastitos{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Estadísticas Mensuales</h2>
-    
+<div class="container" style="padding: 3rem 0; max-width: 1100px;">
+    <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Histórico</span>
+    <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0.5rem 0 2rem;">Estadísticas mensuales</h1>
+
     {% if estadisticas %}
-        <div class="row">
+        <div class="row g-3">
             {% for estadistica in estadisticas %}
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        {{ estadistica.nombre_mes }} {{ estadistica.año }}
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Total de gastos: ${{ estadistica.total_gastos|floatformat:2 }}</h5>
+                <div class="col-md-4">
+                    <div class="card" style="padding: 1.5rem;">
+                        <div style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.5rem;">
+                            {{ estadistica.nombre_mes }} {{ estadistica.año }}
+                        </div>
+                        <div style="font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em;">
+                            ${{ estadistica.total_gastos|floatformat:0 }}
+                        </div>
+                        <div style="font-size: 0.8125rem; color: var(--color-text-soft); margin-top: 0.25rem;">
+                            Total de gastos del mes
+                        </div>
                     </div>
                 </div>
-            </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="alert alert-info">
-            No hay estadísticas mensuales disponibles.
+        <div class="card" style="padding: 3rem; text-align: center;">
+            <p style="color: var(--color-text-soft); margin: 0;">
+                No hay estadísticas mensuales disponibles todavía.
+            </p>
         </div>
     {% endif %}
 </div>
