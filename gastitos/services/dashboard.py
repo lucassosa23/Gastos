@@ -7,10 +7,11 @@ reciben el user explicito) para que la vista quede como
 controller-thin.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Sum
+from django.utils import timezone
 
 from ..models import Gasto, Vencimiento
 
@@ -22,8 +23,13 @@ MESES_NOMBRES = [
 
 
 def gastos_mes_actual_qs(user):
-    """Queryset de gastos del usuario en el mes calendario actual."""
-    mes_actual = datetime.now().replace(day=1)
+    """Queryset de gastos del usuario en el mes calendario actual.
+
+    Usa timezone.now() en lugar de datetime.now() — el modelo guarda
+    DateTimeField timezone-aware (USE_TZ=True). Sin la conversion, la
+    comparacion fecha__gte fallaba silenciosamente y retornaba 0.
+    """
+    mes_actual = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     return Gasto.objects.filter(usuario=user, fecha__gte=mes_actual)
 
 
@@ -42,7 +48,7 @@ def calcular_gasto_por_finde(saldo_restante):
     Si no quedan fines de semana, devuelve el saldo entero (1 fin de
     semana ficticio para evitar division por cero).
     """
-    hoy = datetime.now().date()
+    hoy = timezone.now().date()
     ultimo_dia_mes = (
         (hoy.replace(day=1) + timedelta(days=32)).replace(day=1)
         - timedelta(days=1)
@@ -71,7 +77,7 @@ def calcular_gasto_por_finde(saldo_restante):
 
 def vencimientos_proximos(user, dias=3):
     """Vencimientos activos del usuario en los proximos N dias."""
-    hoy = datetime.now().date()
+    hoy = timezone.now().date()
     return Vencimiento.objects.filter(
         usuario=user,
         activo=True,
