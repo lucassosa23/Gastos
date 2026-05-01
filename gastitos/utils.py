@@ -1,3 +1,4 @@
+import logging
 import re
 import cv2
 import numpy as np
@@ -8,6 +9,8 @@ from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
 import os
 from django.core.exceptions import ValidationError
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -105,7 +108,7 @@ def procesar_imagen_comprobante(imagen_path):
     try:
         # Verificar si Tesseract está disponible
         if not hasattr(pytesseract.pytesseract, 'tesseract_cmd') or not pytesseract.pytesseract.tesseract_cmd:
-            print("Tesseract no está configurado correctamente")
+            logger.warning("Tesseract no está configurado correctamente")
             return None
             
         # Abrir y procesar la imagen
@@ -138,10 +141,10 @@ def procesar_imagen_comprobante(imagen_path):
                 # Si falla el español, usar inglés por defecto
                 texto = pytesseract.image_to_string(pil_imagen, lang='eng')
         except pytesseract.TesseractNotFoundError:
-            print("Tesseract no encontrado. Por favor instale Tesseract OCR.")
+            logger.warning("Tesseract no encontrado. Por favor instale Tesseract OCR.")
             return None
         except Exception as ocr_error:
-            print(f"Error en OCR: {ocr_error}")
+            logger.exception("Error en OCR")
             # Último intento sin especificar idioma
             try:
                 texto = pytesseract.image_to_string(pil_imagen)
@@ -154,7 +157,7 @@ def procesar_imagen_comprobante(imagen_path):
         return resultado
         
     except Exception as e:
-        print(f"Error procesando imagen: {e}")
+        logger.exception("Error procesando imagen")
         return None
 
 def extraer_datos_texto(texto):
@@ -283,7 +286,7 @@ def extraer_datos_imagen(imagen_file):
         return resultado
         
     except Exception as e:
-        print(f"Error extrayendo datos de imagen: {e}")
+        logger.exception("Error extrayendo datos de imagen")
         return None
 
 def procesar_historial_mercadopago(imagen_file):
@@ -302,7 +305,7 @@ def procesar_historial_mercadopago(imagen_file):
             
         # Verificar si Tesseract está disponible
         if not hasattr(pytesseract.pytesseract, 'tesseract_cmd') or not pytesseract.pytesseract.tesseract_cmd:
-            print("Tesseract no está configurado correctamente")
+            logger.warning("Tesseract no está configurado correctamente")
             return []
             
         # Guardar temporalmente la imagen
@@ -340,16 +343,16 @@ def procesar_historial_mercadopago(imagen_file):
                 # Si falla el español, usar inglés por defecto
                 texto = pytesseract.image_to_string(pil_imagen, lang='eng')
         except pytesseract.TesseractNotFoundError:
-            print("Tesseract no encontrado. Por favor instale Tesseract OCR.")
+            logger.warning("Tesseract no encontrado. Por favor instale Tesseract OCR.")
             os.unlink(temp_path)
             return []
         except Exception as ocr_error:
-            print(f"Error en OCR: {ocr_error}")
+            logger.exception("Error en OCR")
             try:
                 # Último intento sin especificar idioma
                 texto = pytesseract.image_to_string(pil_imagen)
             except Exception as final_error:
-                print(f"Error final en OCR: {final_error}")
+                logger.exception("Error final en OCR")
                 os.unlink(temp_path)
                 return []
         
@@ -362,7 +365,7 @@ def procesar_historial_mercadopago(imagen_file):
         return gastos
         
     except Exception as e:
-        print(f"Error procesando historial: {e}")
+        logger.exception("Error procesando historial")
         return []
 
 def extraer_gastos_historial(texto):
@@ -407,15 +410,15 @@ def extraer_gastos_historial(texto):
     # Procesar cada línea
     for i, linea in enumerate(lineas):
         linea = linea.strip()
-        print(f"Procesando línea {i}: '{linea}'")
+        logger.debug("Procesando línea %d: %r", i, linea)
         
         if not linea or len(linea) < 5:
-            print(f"Línea {i} descartada: muy corta")
+            logger.debug("Línea %d descartada: muy corta", i)
             continue
             
         # Filtrar líneas que contengan '+' antes del monto (ingresos)
         if re.search(r'\+\s*\$?\s*[0-9]', linea) or re.search(r'\+\s*[0-9]', linea):
-            print(f"Línea {i} descartada: contiene signo '+'")
+            logger.debug("Línea %d descartada: contiene signo '+'", i)
             continue
             
         # Buscar patrones de transacción
@@ -423,9 +426,9 @@ def extraer_gastos_historial(texto):
         for j, patron in enumerate(patrones_transaccion):
             match = re.search(patron, linea, re.IGNORECASE)
             if match:
-                print(f"Línea {i} coincide con patrón {j}: {patron}")
+                logger.debug("Línea %d coincide con patrón %d: %s", i, j, patron)
                 grupos = match.groups()
-                print(f"Grupos capturados: {grupos}")
+                logger.debug("Grupos capturados: %r", grupos)
                 
                 # Manejar diferentes números de grupos según el patrón
                 if len(grupos) >= 2:
@@ -459,7 +462,7 @@ def extraer_gastos_historial(texto):
                 monto = None
                 if monto_str:
                     try:
-                        print(f"Procesando monto_str: '{monto_str}'")
+                        logger.debug("Procesando monto_str: %r", monto_str)
                         # Normalizar formato de número
                         if ',' in monto_str and '.' in monto_str:
                             if monto_str.rfind(',') > monto_str.rfind('.'):
@@ -483,9 +486,9 @@ def extraer_gastos_historial(texto):
                             # Si tiene 1 o 2 dígitos después del punto, es decimal
                         
                         monto = float(monto_str)
-                        print(f"Monto procesado: {monto}")
+                        logger.debug("Monto procesado: %s", monto)
                     except (ValueError, InvalidOperation) as e:
-                        print(f"Error procesando monto '{monto_str}': {e}")
+                        logger.warning("Error procesando monto %r: %s", monto_str, e)
                         continue
                 
                 # Procesar fecha
@@ -537,13 +540,13 @@ def extraer_gastos_historial(texto):
                         'prioridad': prioridad
                     }
                     gastos.append(gasto)
-                    print(f"Gasto agregado: {gasto}")
+                    logger.debug("Gasto agregado: %s", gasto)
                     break  # Solo un patrón por línea
                 else:
-                    print(f"Gasto no agregado - monto inválido: {monto}")
+                    logger.debug("Gasto no agregado - monto inválido: %s", monto)
                     
         if not patron_encontrado:
-            print(f"Línea {i} no coincide con ningún patrón")
+            logger.debug("Línea %d no coincide con ningún patrón", i)
     
     # Filtrar gastos duplicados y validar
     gastos_validos = []
@@ -614,7 +617,7 @@ def procesar_pdf_tarjeta_credito(pdf_file):
         return None
         
     except Exception as e:
-        print(f"Error procesando PDF: {e}")
+        logger.exception("Error procesando PDF")
         return None
 
 
@@ -691,5 +694,5 @@ def extraer_total_tarjeta_credito(texto):
         return None
         
     except Exception as e:
-        print(f"Error extrayendo total: {e}")
+        logger.exception("Error extrayendo total")
         return None
