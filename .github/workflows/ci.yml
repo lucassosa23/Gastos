@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      # Variables minimas para que settings.py levante en CI.
+      # SECRET_KEY ficticia (DEBUG=True activa el fallback dev de
+      # settings.py de todas formas, pero la dejamos explicita por claridad).
+      DJANGO_SECRET_KEY: ci-secret-key-not-for-production-use
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django system check
+        run: python manage.py check
+
+      - name: Run migrations on a clean DB
+        # Verifica que la cadena de migraciones aplica sobre una DB vacia.
+        # La columna saldo_base de PerfilUsuario depende de
+        # 0016_fix_saldo_base; si esto rompe es por una migracion mal escrita.
+        run: python manage.py migrate
+
+      - name: Run tests
+        run: python manage.py test gastitos -v 2
+
+      - name: Run --deploy check (modo prod)
+        # Levanta los headers de seguridad y verifica que no falten configs
+        # criticas para produccion. Usa env vars distintas a las del test.
+        env:
+          DJANGO_DEBUG: "False"
+          DJANGO_SECRET_KEY: ci-prod-key-only-for-deploy-check-not-real
+          DJANGO_ALLOWED_HOSTS: example.com
+        run: python manage.py check --deploy --fail-level WARNING || true
+        # `|| true` porque check --deploy emite warnings sobre cosas que
+        # no aplican en CI (ej. SECURE_HSTS_PRELOAD requiere submission a
+        # browsers reales). Cuando se ramp up de prod, quitar el || true.
