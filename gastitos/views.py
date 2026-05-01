@@ -486,11 +486,12 @@ def agregar_vencimiento(request):
                 'success': False,
                 'error': 'Formato de fecha inválido'
             })
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'Error al crear el vencimiento: {str(e)}'
-            })
+        except Exception:
+            logger.exception("agregar_vencimiento fallo")
+            return JsonResponse(
+                {'success': False, 'error': 'Error al crear el vencimiento'},
+                status=500,
+            )
     
     return JsonResponse({'success': False, 'error': 'Método no permitido'})
 
@@ -541,13 +542,14 @@ def index(request):
                             }
                             return JsonResponse(response_data)
                         
-                    except Exception as e:
-                        messages.error(request, f'Error procesando historial: {str(e)}')
+                    except Exception:
+                        logger.exception("Procesamiento de historial fallo")
+                        messages.error(request, 'Error procesando historial')
                         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '') or request.headers.get('Content-Type', '').startswith('multipart/form-data'):
-                            return JsonResponse({
-                                'success': False,
-                                'error': f'Error procesando historial: {str(e)}'
-                            })
+                            return JsonResponse(
+                                {'success': False, 'error': 'Error procesando historial'},
+                                status=500,
+                            )
                 else:
                     messages.error(request, 'No se seleccionó ninguna imagen.')
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '') or request.headers.get('Content-Type', '').startswith('multipart/form-data'):
@@ -611,13 +613,14 @@ def index(request):
                                     'error': 'No se pudo extraer el total del PDF. Verifica que sea un estado de cuenta válido.'
                                 })
                         
-                    except Exception as e:
-                        messages.error(request, f'Error procesando PDF: {str(e)}')
+                    except Exception:
+                        logger.exception("Procesamiento de PDF fallo")
+                        messages.error(request, 'Error procesando PDF')
                         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                            return JsonResponse({
-                                'success': False,
-                                'error': f'Error procesando PDF: {str(e)}'
-                            })
+                            return JsonResponse(
+                                {'success': False, 'error': 'Error procesando PDF'},
+                                status=500,
+                            )
                 else:
                     messages.error(request, 'No se seleccionó ningún archivo PDF.')
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -763,8 +766,9 @@ def actualizar_salario(request):
                                 gasto.fecha = datos_ocr['fecha']
                             
                             messages.info(request, f'Datos extraídos de la imagen - Monto: ${datos_ocr.get("monto", "N/A")}, Fecha: {datos_ocr.get("fecha", "N/A")}')
-                    except Exception as e:
-                        messages.warning(request, f'No se pudieron extraer datos de la imagen: {str(e)}')
+                    except Exception:
+                        logger.exception("OCR de imagen fallo en index")
+                        messages.warning(request, 'No se pudieron extraer datos de la imagen')
                 
                 # Validar saldo suficiente
                 if gasto.monto > perfil.saldo_disponible:
