@@ -30,7 +30,14 @@ from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 import json
 import logging
-from .utils import extraer_datos_imagen, procesar_historial_mercadopago
+from django.core.exceptions import ValidationError as DjangoValidationError
+from .utils import (
+    extraer_datos_imagen,
+    procesar_historial_mercadopago,
+    validate_image_upload,
+    validate_pdf_upload,
+    randomize_filename,
+)
 from .utils_estadisticas import guardar_estadisticas_mensuales, obtener_estadisticas_mensuales
 from django.contrib.admin.views.decorators import staff_member_required
 
@@ -504,8 +511,27 @@ def index(request):
             # Manejar procesamiento de historial de MercadoPago
             if 'historial_submit' in request.POST:
                 if 'historial_imagen' in request.FILES:
+                    imagen_historial = request.FILES['historial_imagen']
+
+                    # Validar tipo, tamaño y extension antes de cualquier
+                    # procesamiento. Si falla, devolver mensaje claro y
+                    # cortar — el OCR es caro, no lo lanzamos sobre input
+                    # no validado.
                     try:
-                        imagen_historial = request.FILES['historial_imagen']
+                        validate_image_upload(imagen_historial)
+                    except DjangoValidationError as exc:
+                        msg = exc.messages[0] if exc.messages else 'Imagen inválida'
+                        messages.error(request, msg)
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '') or request.headers.get('Content-Type', '').startswith('multipart/form-data'):
+                            return JsonResponse(
+                                {'success': False, 'error': msg},
+                                status=400,
+                            )
+                        return redirect('index')
+
+                    randomize_filename(imagen_historial)
+
+                    try:
                         gastos_extraidos = procesar_historial_mercadopago(imagen_historial)
                         
                         gastos_agregados = 0
@@ -563,10 +589,25 @@ def index(request):
             # Manejar procesamiento de PDF de tarjeta de crédito
             elif 'tarjeta_credito_submit' in request.POST:
                 if 'tarjeta_pdf' in request.FILES:
+                    pdf_file = request.FILES['tarjeta_pdf']
+
+                    try:
+                        validate_pdf_upload(pdf_file)
+                    except DjangoValidationError as exc:
+                        msg = exc.messages[0] if exc.messages else 'PDF inválido'
+                        messages.error(request, msg)
+                        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                            return JsonResponse(
+                                {'success': False, 'error': msg},
+                                status=400,
+                            )
+                        return redirect('index')
+
+                    randomize_filename(pdf_file)
+
                     try:
                         from .utils import procesar_pdf_tarjeta_credito
-                        
-                        pdf_file = request.FILES['tarjeta_pdf']
+
                         resultado = procesar_pdf_tarjeta_credito(pdf_file)
                         
                         if resultado:
