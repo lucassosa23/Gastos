@@ -8,146 +8,298 @@
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* ====================================================================
+           Design tokens — Indigo Minimalist
+           Coherente con el portfolio del autor (lucassosa4).
+           ==================================================================== */
         :root {
-            --primary-blue: #2563eb;
-            --light-blue: #dbeafe;
-            --dark-blue: #1e40af;
-            --accent-blue: #3b82f6;
+            --color-bg: #fbf8ff;
+            --color-bg-card: #ffffff;
+            --color-text: #0f172a;
+            --color-text-muted: #475569;
+            --color-text-soft: #64748b;
+            --color-border: #e2e8f0;
+            --color-border-soft: #f1f5f9;
+            --color-primary: #464bd7;
+            --color-primary-hover: #2a14b4;
+            --color-primary-soft: #e1e0ff;
+            --color-primary-soft-strong: #bfc1ff;
+            --color-on-primary: #ffffff;
+            --color-success: #16a34a;
+            --color-danger: #dc2626;
+            --color-warning: #d97706;
+
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
         }
-        
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--color-bg);
             min-height: 100vh;
-            color: #1e293b;
+            color: var(--color-text);
+            -webkit-font-smoothing: antialiased;
+            font-feature-settings: 'cv11', 'ss01';
+            letter-spacing: -0.01em;
         }
-        
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--color-text);
+        }
+
+        /* ====================================================================
+           Nav minimalista (glass + hairline)
+           ==================================================================== */
         .navbar {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
-            padding: 1rem 0;
+            background: rgba(251, 248, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-border);
+            box-shadow: none;
+            padding: 0.875rem 0;
         }
-        
+
         .navbar-brand {
             font-weight: 700;
-            font-size: 1.5rem;
-            color: white !important;
+            font-size: 1.125rem;
+            color: var(--color-text) !important;
+            letter-spacing: -0.02em;
         }
-        
+
+        .navbar-brand i {
+            color: var(--color-primary);
+        }
+
         .nav-link {
-            color: rgba(255, 255, 255, 0.9) !important;
+            color: var(--color-text-muted) !important;
             font-weight: 500;
-            transition: all 0.3s ease;
-            margin: 0 0.5rem;
-            border-radius: 8px;
-            padding: 0.5rem 1rem !important;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+            margin: 0 0.25rem;
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0.875rem !important;
         }
-        
+
         .nav-link:hover {
-            color: white !important;
-            background-color: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
+            color: var(--color-text) !important;
+            background: var(--color-border-soft);
         }
-        
+
         .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white !important;
+            color: var(--color-primary) !important;
+            background: var(--color-primary-soft);
         }
-        
-        .profile-dropdown {
-            position: relative;
-        }
-        
+
         .profile-img {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            border: 2px solid white;
+            border: 1px solid var(--color-border);
             object-fit: cover;
         }
-        
+
+        .dropdown-menu {
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 0.5rem;
+        }
+        .dropdown-item {
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .dropdown-item:hover {
+            background: var(--color-border-soft);
+        }
+
+        /* ====================================================================
+           Cards: borderless con hover sutil
+           ==================================================================== */
         .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1);
-            transition: all 0.3s ease;
-            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: var(--color-bg-card);
         }
-        
+
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+            border-color: var(--color-text-muted);
+            box-shadow: var(--shadow-md);
+            transform: none;
         }
-        
+
         .card-header {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 1.5rem;
-            border: none;
+            background: transparent;
+            color: var(--color-text);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+            font-weight: 600;
         }
-        
+
+        /* ====================================================================
+           Botones: primary indigo plano + secondary outline + ghost
+           ==================================================================== */
+        .btn {
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: var(--radius-md);
+            padding: 0.625rem 1.125rem;
+            transition: all 0.2s ease;
+            letter-spacing: -0.01em;
+        }
+        .btn-lg {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+        }
+        .btn-sm {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.825rem;
+        }
+
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            background: var(--color-primary);
+            border: 1px solid var(--color-primary);
+            color: var(--color-on-primary);
+            box-shadow: none;
         }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+        .btn-primary:hover, .btn-primary:focus {
+            background: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+            color: var(--color-on-primary);
         }
-        
-        .form-control {
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
+
+        .btn-outline-primary {
+            border: 1px solid var(--color-primary);
+            color: var(--color-primary);
+            background: transparent;
         }
-        
-        .form-control:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+        .btn-outline-primary:hover {
+            background: var(--color-primary);
+            color: var(--color-on-primary);
         }
-        
-        .saldo-card {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+        .btn-light {
+            background: var(--color-border-soft);
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+        }
+        .btn-light:hover {
+            background: var(--color-border);
+            color: var(--color-text);
+        }
+
+        /* Compatibilidad con clases bootstrap usadas en templates existentes */
+        .btn-success {
+            background: var(--color-success);
+            border-color: var(--color-success);
+        }
+        .btn-danger {
+            background: var(--color-danger);
+            border-color: var(--color-danger);
+        }
+        .btn-warning {
+            background: var(--color-warning);
+            border-color: var(--color-warning);
             color: white;
-            text-align: center;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
         }
-        
+
+        /* ====================================================================
+           Forms
+           ==================================================================== */
+        .form-control, .form-select {
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 0.625rem 0.875rem;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: var(--color-bg-card);
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-soft);
+        }
+        .form-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        /* ====================================================================
+           Custom widgets de Gastitos
+           ==================================================================== */
+        .saldo-card {
+            background: var(--color-primary-soft);
+            color: var(--color-primary-hover);
+            text-align: center;
+            padding: 2rem 1.5rem;
+            border-radius: var(--radius-xl);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--color-primary-soft-strong);
+        }
         .saldo-amount {
             font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.25rem;
+            color: var(--color-primary-hover);
         }
-        
+
         .mini-salario {
-            background: linear-gradient(135deg, var(--light-blue) 0%, #bfdbfe 100%);
-            border: 1px solid var(--primary-blue);
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
+            background: var(--color-primary-soft);
+            border: 1px solid var(--color-primary-soft-strong);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0.875rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--dark-blue);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-primary-hover);
             margin-bottom: 1rem;
         }
+
+        /* Bg utilitarios usados en Bootstrap — mapeo a paleta nueva */
+        .bg-primary { background: var(--color-primary) !important; }
+        .bg-success { background: var(--color-success) !important; }
+        .bg-danger { background: var(--color-danger) !important; }
+        .bg-warning { background: var(--color-warning) !important; }
+        .bg-info { background: var(--color-primary-soft) !important; color: var(--color-primary-hover) !important; }
+        .bg-info * { color: var(--color-primary-hover) !important; }
+        .bg-light { background: var(--color-border-soft) !important; }
+
+        .text-primary { color: var(--color-primary) !important; }
+        .text-muted { color: var(--color-text-soft) !important; }
+
+        /* Alerts */
+        .alert {
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            font-size: 0.9rem;
+        }
+        .alert-success { border-color: rgba(22, 163, 74, 0.3); background: #f0fdf4; color: #166534; }
+        .alert-danger { border-color: rgba(220, 38, 38, 0.3); background: #fef2f2; color: #991b1b; }
+        .alert-warning { border-color: rgba(217, 119, 6, 0.3); background: #fffbeb; color: #92400e; }
+        .alert-info { border-color: var(--color-primary-soft-strong); background: var(--color-primary-soft); color: var(--color-primary-hover); }
         
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -482,44 +634,38 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">
-                <i class="fas fa-wallet me-2"></i>Control de Gastos
+                <i class="fas fa-wallet me-2"></i>Gastitos
             </a>
-            
+
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
                 {% if user.is_authenticated %}
-                    <a class="nav-link" href="{% url 'index' %}">
-                        <i class="fas fa-home me-1"></i>Inicio
-                    </a>
-                    <a class="nav-link" href="{% url 'dashboard' %}">
-                        <i class="fas fa-chart-bar me-1"></i>Dashboard
-                    </a>
-                    <a class="nav-link" href="{% url 'planificacion_gastos' %}">
-                        <i class="fas fa-calendar-alt me-1"></i>Planificación
-                    </a>
-                    
-                    <div class="dropdown profile-dropdown ms-3">
+                    <a class="nav-link" href="{% url 'index' %}">Inicio</a>
+                    <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                    <a class="nav-link" href="{% url 'planificacion_gastos' %}">Planificación</a>
+
+                    <div class="dropdown ms-2">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                             {% if user.perfilusuario.foto %}
                                 <img src="{{ user.perfilusuario.foto.url }}" alt="Perfil" class="profile-img me-2">
                             {% else %}
-                                <div class="profile-img me-2 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.2);">
-                                    <i class="fas fa-user"></i>
+                                <div class="profile-img me-2 d-flex align-items-center justify-content-center" style="background: var(--color-primary-soft); color: var(--color-primary-hover); border-color: var(--color-primary-soft-strong);">
+                                    <i class="fas fa-user fa-xs"></i>
                                 </div>
                             {% endif %}
                             {{ user.first_name|default:user.username }}
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'perfil' %}"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'perfil' %}"><i class="fas fa-user me-2 text-muted"></i>Mi Perfil</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2 text-muted"></i>Cerrar Sesión</a></li>
                         </ul>
                     </div>
                 {% else %}
-                    <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
-                    <a class="nav-link" href="{% url 'registro' %}">Registrarse</a>
+                    <a class="nav-link" href="{% url 'login' %}">Iniciar sesión</a>
+                    <a class="btn btn-primary btn-sm ms-2" href="{% url 'registro' %}">Crear cuenta</a>
                 {% endif %}
             </div>
         </div>
