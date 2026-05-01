@@ -6,8 +6,8 @@ from django.contrib.auth.views import LoginView
 from .forms import RegistroForm, BootstrapAuthenticationForm
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import models, transaction
 from django.db.models import Sum, Q
-from django.db import models
 from django.db.models.functions import TruncMonth
 from django.core.paginator import Paginator
 from .models import Gasto, PerfilUsuario, GastoFijo, Vencimiento, MetaAhorro, GastoPlanificado
@@ -27,11 +27,14 @@ class GastoPlanificadoForm(forms.ModelForm):
         }
 from .forms_ahorro import MetaAhorroForm, AgregarAhorroForm, EditarMetaForm
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
+import logging
 from .utils import extraer_datos_imagen, procesar_historial_mercadopago
 from .utils_estadisticas import guardar_estadisticas_mensuales, obtener_estadisticas_mensuales
 from django.contrib.admin.views.decorators import staff_member_required
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def estadisticas_mensuales(request):
@@ -215,50 +218,69 @@ def aplicar_gasto_planificado(request, gasto_id):
 
 @login_required
 def agregar_gasto_calendario(request):
-    """Vista para agregar gastos desde el calendario"""
-    if request.method == 'POST':
-        try:
-            descripcion = request.POST.get('descripcion')
-            monto = Decimal(str(request.POST.get('monto')))
-            fecha_str = request.POST.get('fecha_seleccionada')
-            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-            
-            # Verificar saldo suficiente
-            perfil = PerfilUsuario.objects.get(user=request.user)
+    """Vista para agregar gastos desde el calendario."""
+    if request.method != 'POST':
+        return JsonResponse(
+            {'success': False, 'error': 'Método no permitido'},
+            status=405,
+        )
+
+    # Parseo y validacion de input fuera del lock: si los datos son
+    # invalidos no necesitamos tomar el lock del perfil.
+    try:
+        descripcion = request.POST.get('descripcion')
+        monto = Decimal(str(request.POST.get('monto')))
+        fecha = datetime.strptime(
+            request.POST.get('fecha_seleccionada'), '%Y-%m-%d'
+        ).date()
+    except (InvalidOperation, TypeError, ValueError):
+        return JsonResponse(
+            {'success': False, 'error': 'Datos inválidos'},
+            status=400,
+        )
+
+    # Lock + check + create en una unica transaccion para evitar que
+    # dos requests concurrentes del mismo usuario superen su saldo.
+    try:
+        with transaction.atomic():
+            perfil = (
+                PerfilUsuario.objects
+                .select_for_update()
+                .get(user=request.user)
+            )
             if monto > perfil.saldo_disponible:
                 return JsonResponse({
                     'success': False,
-                    'error': f'Saldo insuficiente. Disponible: ${perfil.saldo_disponible:.2f}'
+                    'error': f'Saldo insuficiente. Disponible: ${perfil.saldo_disponible:.2f}',
                 })
-            
-            # Crear el gasto
             gasto = Gasto.objects.create(
                 usuario=request.user,
                 descripcion=descripcion,
                 monto=monto,
-                fecha=fecha
+                fecha=fecha,
             )
-            
+    except PerfilUsuario.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Perfil de usuario no encontrado'},
+            status=404,
+        )
+    except Exception:
+        logger.exception("agregar_gasto_calendario fallo")
+        return JsonResponse(
+            {'success': False, 'error': 'Error al procesar la solicitud'},
+            status=500,
+        )
 
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Gasto "{descripcion}" agregado correctamente',
-                'gasto': {
-                    'id': gasto.id,
-                    'descripcion': gasto.descripcion,
-                    'monto': str(gasto.monto),
-                    'fecha': gasto.fecha.isoformat()
-                }
-            })
-            
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'Error al agregar gasto: {str(e)}'
-            })
-    
-    return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    return JsonResponse({
+        'success': True,
+        'message': f'Gasto "{descripcion}" agregado correctamente',
+        'gasto': {
+            'id': gasto.id,
+            'descripcion': gasto.descripcion,
+            'monto': str(gasto.monto),
+            'fecha': gasto.fecha.isoformat(),
+        },
+    })
 
 
 @login_required
@@ -772,46 +794,50 @@ def actualizar_salario(request):
 
 @login_required
 def agregar_gasto(request):
-    perfil = get_object_or_404(PerfilUsuario, user=request.user)
-    
     if request.method == 'POST':
         form = GastoForm(request.POST, request.FILES)
         if form.is_valid():
             gasto = form.save(commit=False)
             gasto.usuario = request.user
-            
-            # Si hay una imagen, extraer datos con OCR
+
+            # OCR fuera del lock: la lectura de imagen puede tardar y no
+            # debe mantener bloqueada la fila del perfil.
             if gasto.imagen_comprobante:
                 try:
                     datos_ocr = extraer_datos_imagen(gasto.imagen_comprobante)
                     if datos_ocr:
-                        # Si no se proporcionó monto, usar el del OCR
                         if not gasto.monto and datos_ocr.get('monto'):
                             gasto.monto = datos_ocr['monto']
-                        
-                        # Si se extrajo fecha, usar la del OCR
                         if datos_ocr.get('fecha'):
                             gasto.fecha = datos_ocr['fecha']
-                        
                         messages.info(request, f'Datos extraídos de la imagen - Monto: ${datos_ocr.get("monto", "N/A")}, Fecha: {datos_ocr.get("fecha", "N/A")}')
-                except Exception as e:
-                    messages.warning(request, f'No se pudieron extraer datos de la imagen: {str(e)}')
-            
-            # Validar saldo suficiente
-            if gasto.monto > perfil.saldo_disponible:
-                messages.error(request, f'Saldo insuficiente. Disponible: ${perfil.saldo_disponible:.2f}')
-                return redirect('index')
-            
-            gasto.save()
+                except Exception:
+                    logger.exception("OCR de imagen fallo en agregar_gasto")
+                    messages.warning(request, 'No se pudieron extraer datos de la imagen')
 
-            # La gamificación fue removida en la migración 0010_remove_gamification_tables.
-            # Si se reintroduce, llamar acá al hook correspondiente.
+            # Lock + validacion de saldo + save en una unica transaccion.
+            # select_for_update() serializa requests concurrentes del mismo
+            # usuario para que no puedan consumir saldo en paralelo.
+            try:
+                with transaction.atomic():
+                    perfil = (
+                        PerfilUsuario.objects
+                        .select_for_update()
+                        .get(user=request.user)
+                    )
+                    if gasto.monto > perfil.saldo_disponible:
+                        messages.error(request, f'Saldo insuficiente. Disponible: ${perfil.saldo_disponible:.2f}')
+                        return redirect('index')
+                    gasto.save()
+            except PerfilUsuario.DoesNotExist:
+                messages.error(request, 'Perfil de usuario no encontrado')
+                return redirect('index')
 
             messages.success(request, 'Gasto agregado exitosamente')
             return redirect('index')
     else:
         form = GastoForm()
-    
+
     return render(request, 'gastos/agregar_gasto.html', {'form': form})
 
 @login_required
