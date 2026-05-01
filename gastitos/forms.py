@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from datetime import date, timedelta
 import re
 from .models import Gasto, PerfilUsuario, GastoFijo, Vencimiento
+from .utils import validate_image_upload, randomize_filename
 
 class GastoForm(forms.ModelForm):
     class Meta:
@@ -73,6 +74,17 @@ class PerfilUsuarioForm(forms.ModelForm):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
             self.fields['email'].initial = self.instance.user.email
+
+    def clean_foto(self):
+        # Solo se valida cuando hay un archivo nuevo (UploadedFile expone
+        # content_type). Si el usuario edita el perfil sin tocar la foto,
+        # el campo trae la ImageFieldFile existente y no necesita
+        # validacion ni renombrado.
+        foto = self.cleaned_data.get('foto')
+        if foto and hasattr(foto, 'content_type'):
+            validate_image_upload(foto)
+            randomize_filename(foto)
+        return foto
     
     def clean_first_name(self):
         first_name = self.cleaned_data.get('first_name')

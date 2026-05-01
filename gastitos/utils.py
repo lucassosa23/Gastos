@@ -3,9 +3,77 @@ import cv2
 import numpy as np
 from PIL import Image
 import pytesseract
+import uuid
 from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
 import os
+from django.core.exceptions import ValidationError
+
+
+# ============================================================================
+# Validacion de uploads
+# ============================================================================
+
+# Limites configurables. Si crece la app, mover a settings.
+MAX_IMAGE_SIZE = 5 * 1024 * 1024   # 5 MB
+MAX_PDF_SIZE = 10 * 1024 * 1024    # 10 MB
+
+ALLOWED_IMAGE_CONTENT_TYPES = {
+    'image/jpeg', 'image/png', 'image/webp', 'image/heic',
+}
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.heic'}
+ALLOWED_PDF_CONTENT_TYPES = {'application/pdf'}
+ALLOWED_PDF_EXTENSIONS = {'.pdf'}
+
+
+def _validate_upload(uploaded_file, *, max_size, allowed_content_types,
+                     allowed_extensions, kind_label):
+    """Valida un archivo subido. Levanta ValidationError si no cumple."""
+    if uploaded_file.size > max_size:
+        raise ValidationError(
+            f'{kind_label} excede el tamaño máximo permitido '
+            f'({max_size // (1024 * 1024)} MB).'
+        )
+
+    content_type = (uploaded_file.content_type or '').lower()
+    if content_type not in allowed_content_types:
+        raise ValidationError(f'{kind_label}: tipo de archivo no permitido.')
+
+    name = (uploaded_file.name or '').lower()
+    if not any(name.endswith(ext) for ext in allowed_extensions):
+        raise ValidationError(f'{kind_label}: extensión no permitida.')
+
+
+def validate_image_upload(uploaded_file):
+    """Valida una imagen subida (jpeg/png/webp/heic, max 5 MB)."""
+    _validate_upload(
+        uploaded_file,
+        max_size=MAX_IMAGE_SIZE,
+        allowed_content_types=ALLOWED_IMAGE_CONTENT_TYPES,
+        allowed_extensions=ALLOWED_IMAGE_EXTENSIONS,
+        kind_label='Imagen',
+    )
+
+
+def validate_pdf_upload(uploaded_file):
+    """Valida un PDF subido (application/pdf, max 10 MB)."""
+    _validate_upload(
+        uploaded_file,
+        max_size=MAX_PDF_SIZE,
+        allowed_content_types=ALLOWED_PDF_CONTENT_TYPES,
+        allowed_extensions=ALLOWED_PDF_EXTENSIONS,
+        kind_label='PDF',
+    )
+
+
+def randomize_filename(uploaded_file):
+    """Reemplaza el nombre del archivo por uuid4 + extensión original.
+
+    Mitiga revelacion del nombre original del cliente y evita pisado entre
+    usuarios cuando varios suben archivos con el mismo nombre.
+    """
+    _, ext = os.path.splitext(uploaded_file.name or '')
+    uploaded_file.name = f'{uuid.uuid4().hex}{ext.lower()}'
 
 # Configurar la ruta de Tesseract para Windows
 if os.name == 'nt':  # Windows
