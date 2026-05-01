@@ -3,229 +3,179 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-    <!-- Contenido para usuarios autenticados -->
-    <div class="container-fluid">
-        <!-- Resumen Financiero -->
+    <div class="container" style="padding: 2rem 0;">
+
         {% if salario_configurado %}
-            <div class="row mb-4">
+
+            {# === Cards superiores: Saldo + Gastos del mes === #}
+            <style>
+                .home-stat { padding: 1.5rem; }
+                .home-stat .home-stat-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-soft); margin-bottom: 0.5rem; }
+                .home-stat .home-stat-amount { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin: 0; line-height: 1.1; }
+                .home-stat.is-saldo-positive { background: var(--color-primary-soft); border-color: var(--color-primary-soft-strong); }
+                .home-stat.is-saldo-positive .home-stat-label { color: var(--color-primary-hover); opacity: 0.75; }
+                .home-stat.is-saldo-positive .home-stat-amount { color: var(--color-primary-hover); }
+                .home-stat.is-saldo-negative .home-stat-amount { color: var(--color-danger); }
+            </style>
+            <div class="row g-3 mb-4">
                 <div class="col-md-6">
-                    <div class="card text-white {% if perfil.saldo_disponible >= 0 %}bg-success{% else %}bg-danger{% endif %} shadow-lg">
-                        <div class="card-body text-center">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1">
-                                    <h6 class="card-title mb-2">Saldo Disponible</h6>
-                                    <h3 class="mb-0">
-                                        <i class="fas fa-wallet me-2"></i>
-                                        <span id="saldo-amount">${{ perfil.saldo_disponible|floatformat:0 }}</span>
-                                        <span id="saldo-hidden" style="display: none;">****</span>
-                                    </h3>
-                                </div>
-                                <div class="ms-2 d-flex gap-1">
-                                    <button id="toggle-saldo" class="btn btn-light btn-sm" title="Ocultar/Mostrar Saldo">
-                                        <i id="eye-icon" class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSaldoModal" title="Editar Saldo">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
+                    <div class="card home-stat {% if perfil.saldo_disponible >= 0 %}is-saldo-positive{% else %}is-saldo-negative{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="home-stat-label">Saldo disponible</div>
+                                <h3 class="home-stat-amount">
+                                    <span id="saldo-amount">${{ perfil.saldo_disponible|floatformat:0 }}</span>
+                                    <span id="saldo-hidden" style="display: none;">$ ****</span>
+                                </h3>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button id="toggle-saldo" class="btn btn-light btn-sm" title="Ocultar/Mostrar Saldo">
+                                    <i id="eye-icon" class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editSaldoModal" title="Editar Saldo">
+                                    <i class="fas fa-edit"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card text-white bg-info shadow-lg">
-                        <div class="card-body text-center">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1">
-                                    <h6 class="card-title mb-2">Gastos del Mes</h6>
-                                    <h3 class="mb-0">
-                                        <i class="fas fa-shopping-cart me-2"></i>${{ total_mes_actual|floatformat:0 }}
-                                    </h3>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="card home-stat">
+                        <div class="home-stat-label">Gastos del mes</div>
+                        <h3 class="home-stat-amount">${{ total_mes_actual|floatformat:0 }}</h3>
                     </div>
                 </div>
             </div>
-            
-            <!-- Sección Principal: Agregar Gasto -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-lg border-0 mb-4">
-                        <div class="card-header bg-gradient-expense py-4">
-                            <!-- Contenido del header -->
-                            <div class="text-center">
-                                <h3 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Agregar Nuevo Gasto</h3>
-                                <p class="mb-0 opacity-75">Gestiona tus gastos de manera inteligente</p>
-                            </div>
-                            
-                            <!-- Botones de acciones principales -->
-                            <div class="d-flex justify-content-center mt-3 gap-2">
-                                <button class="btn" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white;" type="button" data-bs-toggle="modal" data-bs-target="#gastosFijosModal">
-                                    <i class="fas fa-calendar-alt me-2"></i>Gastos Fijos
-                                </button>
-                                <button class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;" type="button" data-bs-toggle="modal" data-bs-target="#historialMercadoPagoModal">
-                                    <i class="fas fa-file-image me-2"></i>Subir Historial
-                                </button>
-                                <button class="btn" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); color: white;" type="button" data-bs-toggle="modal" data-bs-target="#tarjetaCreditoModal">
-                                    <i class="fas fa-credit-card me-2"></i>Resumen Tarjeta
-                                    
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body p-4">
-                            <!-- Mostrar mensajes -->
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                            
-                            <form method="post" enctype="multipart/form-data" class="gasto-form">
-                                {% csrf_token %}
-                                
-                                <div class="row g-3">
-                                    <!-- Descripción -->
-                                    <div class="col-12 col-md-8">
-                                        <label for="{{ gasto_form.descripcion.id_for_label }}" class="form-label fw-bold">
-                                            <i class="fas fa-tag me-2 text-primary"></i>Descripción
-                                        </label>
-                                        {{ gasto_form.descripcion|add_class:"form-control" }}
-                                    </div>
-                                    
-                                    <!-- Monto -->
-                                    <div class="col-12 col-md-4">
-                                        <label for="{{ gasto_form.monto.id_for_label }}" class="form-label fw-bold">
-                                            <i class="fas fa-dollar-sign me-2 text-success"></i>Monto
-                                        </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">$</span>
-                                            {{ gasto_form.monto|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                    
 
-                                    
-
-                                </div>
-                                
-                                <!-- Botón agregar -->
-                                <div class="text-center mt-4">
-                                    <button type="submit" name="gasto_submit" class="btn btn-primary btn-lg px-5">
-                                        <i class="fas fa-plus me-2"></i>Agregar Gasto
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+            {# === Card principal: agregar gasto === #}
+            <div class="card mb-4" style="padding: 2rem;">
+                <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Nuevo registro</span>
+                        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0; letter-spacing: -0.02em;">Agregar gasto</h1>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#gastosFijosModal">
+                            <i class="fas fa-calendar-alt me-2"></i>Gastos fijos
+                        </button>
+                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#historialMercadoPagoModal">
+                            <i class="fas fa-file-image me-2"></i>Subir historial
+                        </button>
+                        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#tarjetaCreditoModal">
+                            <i class="fas fa-credit-card me-2"></i>Resumen tarjeta
+                        </button>
                     </div>
                 </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data" class="gasto-form">
+                    {% csrf_token %}
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-8">
+                            <label for="{{ gasto_form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+                            {{ gasto_form.descripcion|add_class:"form-control" }}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label for="{{ gasto_form.monto.id_for_label }}" class="form-label">Monto</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ gasto_form.monto|add_class:"form-control" }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" name="gasto_submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Agregar gasto
+                        </button>
+                    </div>
+                </form>
             </div>
             
-            <!-- Gastos Recientes -->
+            {# === Gastos recientes === #}
             {% if gastos_recientes %}
-            <div class="row mt-3 mt-md-5">
-                <div class="col-12">
-                    <div class="card shadow-lg border-0">
-                        <div class="card-header bg-light py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 text-dark h6 h5-md"><i class="fas fa-history me-2"></i>Gastos Recientes</h5>
-                                {% if gastos_recientes.has_other_pages %}
-                                <div class="pagination-sm">
-                                    <nav aria-label="Paginación de gastos">
-                                        <ul class="pagination pagination-sm mb-0">
-                                            {% if gastos_recientes.has_previous %}
-                                                <li class="page-item">
-                                                    <a class="page-link" href="?page={{ gastos_recientes.previous_page_number }}" aria-label="Anterior">
-                                                        <span aria-hidden="true">&laquo;</span>
-                                                    </a>
-                                                </li>
-                                            {% endif %}
-                                            
-                                            {% for num in gastos_recientes.paginator.page_range %}
-                                                {% if gastos_recientes.number == num %}
-                                                    <li class="page-item active">
-                                                        <span class="page-link">{{ num }}</span>
-                                                    </li>
-                                                {% elif num > gastos_recientes.number|add:'-3' and num < gastos_recientes.number|add:'3' %}
-                                                    <li class="page-item">
-                                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                                    </li>
-                                                {% endif %}
-                                            {% endfor %}
-                                            
-                                            {% if gastos_recientes.has_next %}
-                                                <li class="page-item">
-                                                    <a class="page-link" href="?page={{ gastos_recientes.next_page_number }}" aria-label="Siguiente">
-                                                        <span aria-hidden="true">&raquo;</span>
-                                                    </a>
-                                                </li>
-                                            {% endif %}
-                                        </ul>
-                                    </nav>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="row g-3">
-                                {% for gasto in gastos_recientes %}
-                                <div class="col-12">
-                                    <div class="card border-0 shadow-sm">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div class="flex-grow-1">
-                                                    <h6 class="card-title mb-1">{{ gasto.descripcion }}</h6>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-calendar-alt me-1"></i>
-                                                        {{ gasto.fecha|date:"d/m/Y H:i" }}
-                                                    </small>
-                                                </div>
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <span class="text-danger fw-bold" style="font-size: 1.1rem;">-${{ gasto.monto|floatformat:0 }}</span>
-                                                    <div class="d-flex gap-2">
-                                                        <button type="button" class="btn btn-outline-primary btn-sm" 
-                                                                onclick="editarGasto({{ gasto.id }}, '{{ gasto.descripcion|escapejs }}', {{ gasto.monto }})"
-                                                                title="Editar gasto">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-danger btn-sm" 
-                                                                onclick="eliminarGasto({{ gasto.id }})"
-                                                                title="Eliminar gasto">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Gastos recientes</span>
+                        {% if gastos_recientes.has_other_pages %}
+                            <nav aria-label="Paginación de gastos">
+                                <ul class="pagination pagination-sm mb-0">
+                                    {% if gastos_recientes.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ gastos_recientes.previous_page_number }}">&laquo;</a>
+                                        </li>
+                                    {% endif %}
+                                    {% for num in gastos_recientes.paginator.page_range %}
+                                        {% if gastos_recientes.number == num %}
+                                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                        {% elif num > gastos_recientes.number|add:'-3' and num < gastos_recientes.number|add:'3' %}
+                                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if gastos_recientes.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ gastos_recientes.next_page_number }}">&raquo;</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    </div>
+                    <div class="card-body p-0">
+                        {% for gasto in gastos_recientes %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--color-border-soft);">
+                                <div>
+                                    <div style="font-weight: 500;">{{ gasto.descripcion }}</div>
+                                    <div style="font-size: 0.8125rem; color: var(--color-text-soft); margin-top: 0.125rem;">
+                                        {{ gasto.fecha|date:"d/m/Y H:i" }}
                                     </div>
                                 </div>
-                                {% endfor %}
+                                <div class="d-flex align-items-center gap-3">
+                                    <strong style="color: var(--color-danger); font-size: 1.05rem;">−${{ gasto.monto|floatformat:0 }}</strong>
+                                    <div class="d-flex gap-1">
+                                        <button type="button" class="btn btn-light btn-sm"
+                                                onclick="editarGasto({{ gasto.id }}, '{{ gasto.descripcion|escapejs }}', {{ gasto.monto }})"
+                                                title="Editar gasto">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-light btn-sm" style="color: var(--color-danger);"
+                                                onclick="eliminarGasto({{ gasto.id }})"
+                                                title="Eliminar gasto">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
-            </div>
             {% endif %}
+
         {% else %}
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card mb-4">
-                        <div class="card-header text-center">
-                            <h3 class="mb-0"><i class="fas fa-dollar-sign me-2"></i>Configura tu Salario</h3>
-                        </div>
-                        <div class="card-body text-center">
-                            <p class="lead text-muted mb-4">Primero necesitas configurar tu salario mensual para comenzar a gestionar tus gastos.</p>
-                            <a href="{% url 'actualizar_salario' %}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-plus me-2"></i>Configurar Salario
-                            </a>
-                        </div>
-                    </div>
+
+            {# === Onboarding: configurar salario === #}
+            <div class="card mx-auto" style="max-width: 560px; padding: 3rem 2rem; text-align: center; margin-top: 4rem;">
+                <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Bienvenido</span>
+                <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 1rem;">Configurá tu salario</h1>
+                <p style="color: var(--color-text-muted); margin: 0 0 2rem;">
+                    Necesitamos tu salario mensual para calcular el saldo disponible y empezar a gestionar gastos.
+                </p>
+                <div>
+                    <a href="{% url 'actualizar_salario' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Configurar salario
+                    </a>
                 </div>
             </div>
+
         {% endif %}
     </div>
 {% else %}
