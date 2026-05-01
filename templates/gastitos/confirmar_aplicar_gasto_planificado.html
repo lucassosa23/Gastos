@@ -1,36 +1,31 @@
 {% extends 'base.html' %}
 
-{% block title %}Confirmar Aplicación de Gasto{% endblock %}
+{% block title %}Confirmar aplicación de gasto · Gastitos{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card border-success">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">Confirmar Aplicación de Gasto</h4>
-                </div>
-                <div class="card-body">
-                    <p class="lead">¿Estás seguro que deseas aplicar este gasto planificado como un gasto real?</p>
-                    
-                    <div class="alert alert-info">
-                        <strong>{{ gasto_planificado.descripcion }}</strong> - ${{ gasto_planificado.monto|floatformat:2 }}
-                        <br>
-                        <small>{{ gasto_planificado.get_mes_display }} {{ gasto_planificado.año }}</small>
-                    </div>
-                    
-                    <p>Al confirmar, se creará un gasto real con estos datos y se marcará este gasto planificado como completado.</p>
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'planificacion_gastos' %}" class="btn btn-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-success">Aplicar Gasto</button>
-                        </div>
-                    </form>
-                </div>
+<div class="container" style="padding: 4rem 0; max-width: 560px;">
+    <div class="card" style="padding: 2rem;">
+        <span class="text-muted" style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">Confirmar acción</span>
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 1rem;">¿Aplicar este gasto planificado?</h1>
+        <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">
+            Se creará un gasto real con estos datos y el planificado quedará marcado como completado.
+        </p>
+
+        <div class="saldo-card" style="margin-bottom: 1.5rem; text-align: left; padding: 1.25rem;">
+            <strong style="font-size: 1rem;">{{ gasto_planificado.descripcion }}</strong>
+            <span style="float: right; font-weight: 700;">${{ gasto_planificado.monto|floatformat:2 }}</span>
+            <div style="font-size: 0.8125rem; opacity: 0.75; margin-top: 0.25rem;">
+                {{ gasto_planificado.get_mes_display }} {{ gasto_planificado.año }}
             </div>
         </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'planificacion_gastos' %}" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Aplicar gasto</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
