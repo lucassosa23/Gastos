@@ -472,7 +472,7 @@ def agregar_vencimiento(request):
     
     return JsonResponse({'success': False, 'error': 'Método no permitido'})
 
-# Quitar @login_required temporalmente para probar
+@login_required
 def index(request):
     if request.user.is_authenticated:
         perfil, created = PerfilUsuario.objects.get_or_create(user=request.user)
@@ -803,10 +803,10 @@ def agregar_gasto(request):
                 return redirect('index')
             
             gasto.save()
-            
-            # Procesar gamificación después de agregar gasto
-            procesar_gamificacion_usuario(request.user)
-            
+
+            # La gamificación fue removida en la migración 0010_remove_gamification_tables.
+            # Si se reintroduce, llamar acá al hook correspondiente.
+
             messages.success(request, 'Gasto agregado exitosamente')
             return redirect('index')
     else:
