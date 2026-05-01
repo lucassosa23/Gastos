@@ -851,51 +851,88 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             const container = document.getElementById('gastosFijosList');
-            if (data.gastos_fijos && data.gastos_fijos.length > 0) {
-                let html = '';
-                let totalGastosFijos = 0;
-                
-                data.gastos_fijos.forEach(gasto => {
-                    // Sumar al total
-                    totalGastosFijos += parseFloat(gasto.monto);
-                    
-                    html += `
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                            <div>
-                                <strong>${gasto.descripcion}</strong>
-                                <span class="text-muted">- $${gasto.monto}</span>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-success me-2" onclick="aplicarGastoFijo(${gasto.id})">
-                                    <i class="fas fa-check"></i> Aplicar
-                                </button>
-                                <button class="btn btn-sm btn-warning me-2" onclick="editarGastoFijo(${gasto.id}, '${gasto.descripcion}', ${gasto.monto})">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="eliminarGastoFijo(${gasto.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                // Agregar el total al final
-                html += `
-                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                        <div>
-                            <strong class="text-primary">TOTAL GASTOS FIJOS</strong>
-                        </div>
-                        <div>
-                            <strong class="text-primary">$${totalGastosFijos.toFixed(2)}</strong>
-                        </div>
-                    </div>
-                `;
-                
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = '<p class="text-muted text-center">No hay gastos fijos guardados</p>';
+            // Limpieza segura: vaciar el contenedor sin innerHTML.
+            container.replaceChildren();
+
+            if (!data.gastos_fijos || data.gastos_fijos.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'text-muted text-center';
+                empty.textContent = 'No hay gastos fijos guardados';
+                container.appendChild(empty);
+                return;
             }
+
+            // Helper para botones con icono. El icono es el unico HTML
+            // que se inyecta y es estatico (FontAwesome class), no hay
+            // user input dentro del innerHTML.
+            const makeButton = (cls, iconCls, label, onClick) => {
+                const btn = document.createElement('button');
+                btn.className = `btn btn-sm ${cls}`;
+                btn.type = 'button';
+                btn.addEventListener('click', onClick);
+                const icon = document.createElement('i');
+                icon.className = iconCls;
+                btn.appendChild(icon);
+                if (label) {
+                    btn.appendChild(document.createTextNode(' ' + label));
+                }
+                return btn;
+            };
+
+            let totalGastosFijos = 0;
+
+            data.gastos_fijos.forEach(gasto => {
+                totalGastosFijos += parseFloat(gasto.monto);
+
+                const row = document.createElement('div');
+                row.className = 'd-flex justify-content-between align-items-center border-bottom py-2';
+
+                // Lado izquierdo: descripcion + monto.
+                const left = document.createElement('div');
+                const desc = document.createElement('strong');
+                desc.textContent = gasto.descripcion;          // <- escape via textContent
+                const monto = document.createElement('span');
+                monto.className = 'text-muted';
+                monto.textContent = ` - $${gasto.monto}`;
+                left.appendChild(desc);
+                left.appendChild(monto);
+
+                // Lado derecho: botones con event listeners (sin onclick inline).
+                const right = document.createElement('div');
+                right.appendChild(makeButton(
+                    'btn-success me-2', 'fas fa-check', 'Aplicar',
+                    () => aplicarGastoFijo(gasto.id)
+                ));
+                right.appendChild(makeButton(
+                    'btn-warning me-2', 'fas fa-edit', 'Editar',
+                    () => editarGastoFijo(gasto.id, gasto.descripcion, gasto.monto)
+                ));
+                right.appendChild(makeButton(
+                    'btn-danger', 'fas fa-trash', '',
+                    () => eliminarGastoFijo(gasto.id)
+                ));
+
+                row.appendChild(left);
+                row.appendChild(right);
+                container.appendChild(row);
+            });
+
+            // Total al final.
+            const totalRow = document.createElement('div');
+            totalRow.className = 'd-flex justify-content-between align-items-center mt-3 pt-3 border-top';
+            const totalLabel = document.createElement('div');
+            const totalLabelStrong = document.createElement('strong');
+            totalLabelStrong.className = 'text-primary';
+            totalLabelStrong.textContent = 'TOTAL GASTOS FIJOS';
+            totalLabel.appendChild(totalLabelStrong);
+            const totalValue = document.createElement('div');
+            const totalValueStrong = document.createElement('strong');
+            totalValueStrong.className = 'text-primary';
+            totalValueStrong.textContent = `$${totalGastosFijos.toFixed(2)}`;
+            totalValue.appendChild(totalValueStrong);
+            totalRow.appendChild(totalLabel);
+            totalRow.appendChild(totalValue);
+            container.appendChild(totalRow);
         })
         .catch(error => {
             console.error('Error al cargar gastos fijos:', error);
@@ -1057,15 +1094,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    // Función para mostrar alertas
+    // Función para mostrar alertas.
+    // Recibe `mensaje` que puede provenir de respuestas del server
+    // (data.error) — se inyecta como text node, nunca como HTML.
     function mostrarAlerta(mensaje, tipo) {
         const alertContainer = document.querySelector('.container-fluid');
         const alert = document.createElement('div');
         alert.className = `alert alert-${tipo} alert-dismissible fade show mt-3`;
-        alert.innerHTML = `
-            ${mensaje}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+
+        alert.appendChild(document.createTextNode(mensaje));
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'btn-close';
+        closeBtn.setAttribute('data-bs-dismiss', 'alert');
+        alert.appendChild(closeBtn);
+
         alertContainer.insertBefore(alert, alertContainer.firstChild);
         
         // Auto-dismiss después de 3 segundos
