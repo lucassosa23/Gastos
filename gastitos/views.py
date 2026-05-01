@@ -472,7 +472,7 @@ def agregar_vencimiento(request):
     
     return JsonResponse({'success': False, 'error': 'Método no permitido'})
 
-# Quitar @login_required temporalmente para probar
+@login_required
 def index(request):
     if request.user.is_authenticated:
         perfil, created = PerfilUsuario.objects.get_or_create(user=request.user)
